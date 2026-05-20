@@ -1,0 +1,272 @@
+// Prisma Schema — EduConnect
+// Run `npm run db:push` to sync this to PostgreSQL (no migrations needed)
+
+generator client {
+  provider = "prisma-client-js"
+  engineType="binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  SCHOOL
+  TEACHER
+  STUDENT
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  OPEN
+  ONGOING
+  COMPLETED
+}
+
+enum EventCategory {
+  DEBATE
+  QUIZ
+  SCIENCE
+  SPORTS
+  ARTS
+  OTHER
+}
+
+enum ResourceType {
+  PDF
+  VIDEO
+  LINK
+  NOTES
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum CertType {
+  PARTICIPATION
+  WINNER
+  RUNNER_UP
+}
+
+enum BotType {
+  RAG
+  PLATFORM
+}
+
+// ─── MODELS ───────────────────────────────────────────────────────────────────
+
+model School {
+  id          String    @id @default(uuid())
+  name        String
+  location    String?
+  affiliation String?   // CBSE, ICSE, State Board
+  logoUrl     String?
+  createdAt   DateTime  @default(now())
+
+  // Relations
+  members      User[]         @relation("SchoolMembers")
+  admin        User?          @relation("SchoolAdmin", fields: [adminId], references: [id])
+  adminId      String?        @unique
+  events       Event[]
+  resources    Resource[]
+  leaderboard  Leaderboard[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  isVerified Boolean @default(false)
+  otps       OTP[]
+
+  // FK to School
+  schoolId  String?
+  school    School?  @relation("SchoolMembers", fields: [schoolId], references: [id])
+
+  // School admin relation (one user can be admin of one school)
+  adminOf   School?  @relation("SchoolAdmin")
+
+  // Relations
+  registrations Registration[]
+  resources     Resource[]
+  leaderboard   Leaderboard[]
+  certificates  Certificate[]
+  forumPosts    ForumPost[]
+  chatSessions  ChatSession[]
+  studyPlans    StudyPlan[]
+}
+
+model Event {
+  id          String        @id @default(uuid())
+  title       String
+  description String
+  targetClass String        @default("All")
+  location    String        @default("TBA")
+  eventTime   String        @default("TBA")
+  prizePool   String        @default("None")
+  firstPrize  String        @default("None")
+  secondPrize String        @default("None")
+  thirdPrize  String        @default("None")
+  category    EventCategory @default(OTHER)
+  eventDate   DateTime
+  regDeadline DateTime?
+  maxTeams    Int?
+  teamSize    Int           @default(1)
+  status      EventStatus   @default(DRAFT)
+  subjectTags String[]      // used by AI to link resources
+  answerKey   Json?         // [{question, answer, explanation}]
+  createdAt   DateTime      @default(now())
+
+  // FK
+  schoolId    String
+  school      School        @relation(fields: [schoolId], references: [id])
+
+  // Relations
+  registrations Registration[]
+  leaderboard   Leaderboard[]
+  certificates  Certificate[]
+  forumPosts    ForumPost[]
+  studyPlans    StudyPlan[]
+}
+
+model Registration {
+  id           String   @id @default(uuid())
+  teamName     String?
+  teamMembers  Json?    @default("[]") // [{name, email, class}]
+  status       String   @default("REGISTERED") // REGISTERED | CHECKED_IN | COMPLETED
+  rank         Int?
+  score        Float?
+  registeredAt DateTime @default(now())
+
+  // FKs
+  eventId   String
+  event     Event  @relation(fields: [eventId], references: [id])
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  @@unique([eventId, studentId]) // student can register once per event
+}
+
+model Resource {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  type        ResourceType @default(PDF)
+  fileUrl     String?
+  subject     String?
+  topic       String?
+  difficulty  Difficulty   @default(BEGINNER)
+  upvotes     Int          @default(0)
+  viewCount   Int          @default(0)
+  isEmbedded  Boolean      @default(false) // Phase 2: vectorized into ChromaDB
+  createdAt   DateTime     @default(now())
+
+  // FKs
+  schoolId    String?
+  school      School?  @relation(fields: [schoolId], references: [id])
+  uploadedBy  String
+  uploader    User     @relation(fields: [uploadedBy], references: [id])
+
+  // Relations
+  chatSessions ChatSession[]
+}
+
+model Leaderboard {
+  id        String   @id @default(uuid())
+  score     Float
+  rank      Int
+  category  String?
+  updatedAt DateTime @updatedAt
+
+  // FKs
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+  schoolId  String
+  school    School @relation(fields: [schoolId], references: [id])
+  eventId   String
+  event     Event  @relation(fields: [eventId], references: [id])
+}
+
+model Certificate {
+  id       String   @id @default(uuid())
+  type     CertType
+  fileUrl  String?
+  issuedAt DateTime @default(now())
+
+  // FKs
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+  eventId   String
+  event     Event  @relation(fields: [eventId], references: [id])
+}
+
+model ForumPost {
+  id        String    @id @default(uuid())
+  title     String?
+  content   String
+  createdAt DateTime  @default(now())
+
+  // FKs
+  eventId   String?
+  event     Event?    @relation(fields: [eventId], references: [id])
+  authorId  String
+  author    User      @relation(fields: [authorId], references: [id])
+  parentId  String?
+  parent    ForumPost? @relation("Replies", fields: [parentId], references: [id])
+  replies   ForumPost[] @relation("Replies")
+}
+
+// ─── Phase 2: AI Models ───────────────────────────────────────────────────────
+
+model ChatSession {
+  id         String   @id @default(uuid())
+  botType    BotType
+  messages   Json     @default("[]") // [{role, content, timestamp}]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // FKs
+  studentId  String
+  student    User      @relation(fields: [studentId], references: [id])
+  resourceId String?
+  resource   Resource? @relation(fields: [resourceId], references: [id])
+}
+
+model StudyPlan {
+  id        String   @id @default(uuid())
+  planData  Json     // full plan from LangGraph
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+
+  // FKs
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+  eventId   String
+  event     Event  @relation(fields: [eventId], references: [id])
+}
+
+
+model OTP {
+  id        String   @id @default(uuid())
+  userId    String
+  otp       String
+  purpose   String   // 'verify' | 'reset'
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
