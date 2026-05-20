@@ -1,0 +1,39 @@
+# ── Node.js ───────────────────────────────────────────────
+node_modules/
+dist/
+build/
+*.log
+npm-debug.log*
+
+# ── Python ────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# ── Environment files (NEVER commit these) ────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Prisma generated ──────────────────────────────────────
+backend/node_modules/
+
+# ── ChromaDB local data (Phase 2) ─────────────────────────
+ai-service/chroma_db/
+
+# ── IDE ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ── React build output ────────────────────────────────────
+frontend/dist/
+frontend/node_modules/
