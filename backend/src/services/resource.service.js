@@ -47,9 +47,15 @@ class ResourceService {
       },
     });
     if (!resource) { const err = new Error('Resource not found.'); err.statusCode = 404; throw err; }
-    await prisma.resource.update({ where: { id }, data: { viewCount: { increment: 1 } } });
     return resource;
   }
+
+  async incrementViewCount(id) {
+    const resource = await prisma.resource.findUnique({ where: { id } });
+    if (!resource) { const err = new Error('Resource not found.'); err.statusCode = 404; throw err; }
+    return prisma.resource.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+  }
+
 
   async delete(id, userId) {
     const resource = await prisma.resource.findUnique({ where: { id } });
@@ -76,8 +82,16 @@ class ResourceService {
   async upvote(id) {
     const resource = await prisma.resource.findUnique({ where: { id } });
     if (!resource) { const err = new Error('Resource not found.'); err.statusCode = 404; throw err; }
-    return prisma.resource.update({ where: { id }, data: { upvotes: { increment: 1 } } });
+    return prisma.resource.update({ 
+      where: { id }, 
+      data: { upvotes: { increment: 1 } },
+      include: {
+        uploader: { select: { id: true, name: true, role: true } },
+        school: { select: { id: true, name: true } },
+      },
+    });
   }
+
 }
 
 module.exports = new ResourceService();
