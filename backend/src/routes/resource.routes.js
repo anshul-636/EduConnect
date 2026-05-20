@@ -3,20 +3,7 @@ const { body } = require('express-validator');
 const { create, getAll, getById, remove, upvote } = require('../controllers/resource.controller');
 const { protect } = require('../middleware/auth.middleware');
 const { restrictTo } = require('../middleware/role.middleware');
-const multer = require('multer');
-const path = require('path');
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../../uploads'));
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    const baseName = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9]/g, '');
-    cb(null, `${baseName}-${Date.now()}${ext}`);
-  }
-});
-const upload = multer({ storage: storage, limits: { fileSize: 1024 * 1024 * 1024 } });
+const { upload } = require('../utils/cloudinary');
 
 const router = Router();
 
