@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  body {
+    @apply bg-dark-950 text-dark-100 font-sans antialiased;
+  }
+
+  * {
+    @apply border-dark-800;
+  }
+}
+
+@layer components {
+  .input {
+    @apply w-full px-4 py-2.5 rounded-xl border border-dark-700 bg-dark-800 text-dark-100 placeholder-dark-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all duration-150;
+  }
+
+  .btn-primary {
+    @apply w-full py-2.5 px-4 bg-gradient-brand text-white font-semibold rounded-xl transition-all duration-150 active:scale-[0.98] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed shadow-glow;
+  }
+
+  .btn-secondary {
+    @apply w-full py-2.5 px-4 border border-dark-700 bg-dark-800 hover:bg-dark-700 text-dark-100 font-medium rounded-xl transition-all duration-150;
+  }
+
+  .card {
+    @apply bg-dark-900 border border-dark-800 rounded-2xl p-6 hover:border-dark-600 transition-all duration-200;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-card-hover hover:-translate-y-0.5 cursor-pointer;
+  }
+
+  .badge {
+    @apply text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-dark-400 hover:text-dark-100 hover:bg-dark-800 transition-all duration-150 text-sm font-medium;
+  }
+
+  .sidebar-link-active {
+    @apply sidebar-link text-brand-400 bg-brand-500/10 hover:bg-brand-500/15;
+  }
+}
