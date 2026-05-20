@@ -1,0 +1,81 @@
+const prisma = require('../utils/prisma');
+const { cloudinary } = require('../utils/cloudinary');
+
+class ResourceService {
+  async create(data, file, userId) {
+    // Generate a URL pointing to the local backend /uploads endpoint
+    const fileUrl = file ? `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/${file.filename}` : (data.fileUrl || null);
+    return prisma.resource.create({
+      data: {
+        title: data.title,
+        description: data.description || null,
+        type: data.type || 'PDF',
+        fileUrl,
+        subject: data.subject || null,
+        topic: data.topic || null,
+        difficulty: data.difficulty || 'BEGINNER',
+        uploadedBy: userId,
+      },
+      include: { uploader: { select: { id: true, name: true, role: true } } },
+    });
+  }
+
+  async getAll(filters = {}) {
+    const where = {};
+    if (filters.subject) where.subject = { contains: filters.subject, mode: 'insensitive' };
+    if (filters.type) where.type = filters.type;
+    if (filters.difficulty) where.difficulty = filters.difficulty;
+    if (filters.search) where.title = { contains: filters.search, mode: 'insensitive' };
+    return prisma.resource.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        uploader: { select: { id: true, name: true, role: true } },
+        school: { select: { id: true, name: true } },
+      },
+    });
+  }
+
+  async getById(id) {
+    const resource = await prisma.resource.findUnique({
+      where: { id },
+      include: {
+        uploader: { select: { id: true, name: true, role: true } },
+        school: { select: { id: true, name: true } },
+      },
+    });
+    if (!resource) { const err = new Error('Resource not found.'); err.statusCode = 404; throw err; }
+    await prisma.resource.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+    return resource;
+  }
+
+  async delete(id, userId) {
+    const resource = await prisma.resource.findUnique({ where: { id } });
+    if (!resource) { const err = new Error('Resource not found.'); err.statusCode = 404; throw err; }
+    
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (resource.uploadedBy !== userId && user?.role !== 'ADMIN') {
+      const err = new Error('You can only delete your own resources.'); err.statusCode = 403; throw err;
+    }
+    if (resource.fileUrl && resource.fileUrl.includes('/uploads/')) {
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const filename = resource.fileUrl.split('/uploads/')[1];
+        const filePath = path.join(__dirname, '../../uploads', filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (e) { console.error('Local file delete error:', e); }
+    }
+    return prisma.resource.delete({ where: { id } });
+  }
+
+  async upvote(id) {
+    const resource = await prisma.resource.findUnique({ where: { id } });
+    if (!resource) { const err = new Error('Resource not found.'); err.statusCode = 404; throw err; }
+    return prisma.resource.update({ where: { id }, data: { upvotes: { increment: 1 } } });
+  }
+}
+
+module.exports = new ResourceService();
