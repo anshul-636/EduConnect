@@ -22,7 +22,9 @@ app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:3000'], crede
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({ secret: process.env.JWT_SECRET, resave: false, saveUninitialized: false }));
+app.use('/uploads', express.static(require('path').join(__dirname, '../uploads')));
 app.use(passport.initialize());
+
 app.use(passport.session());
 
 const API = '/api/v1';

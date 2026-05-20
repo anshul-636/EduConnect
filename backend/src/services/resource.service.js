@@ -5,7 +5,9 @@ class ResourceService {
   async create(data, file, userId) {
     // Generate a URL pointing to the local backend /uploads endpoint
     const fileUrl = file ? `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/${file.filename}` : (data.fileUrl || null);
+
     return prisma.resource.create({
+
       data: {
         title: data.title,
         description: data.description || null,
