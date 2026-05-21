@@ -66,4 +66,23 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+const optionalProtect = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) return next();
+
+    const token = authHeader.split(" ")[1];
+    const payload = verifyToken(token);
+    if (!payload || payload.type !== "access") return next();
+
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, email: true, name: true, role: true, isActive: true },
+    });
+
+    if (user && user.isActive) req.user = user;
+    next();
+  } catch (error) { next(); }
+};
+
+module.exports = { protect, optionalProtect };

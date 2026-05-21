@@ -20,16 +20,50 @@ class EventService {
     });
   }
 
-  async getAll(filters = {}) {
+  async getAll(filters = {}, user = null) {
     const where = {};
     if (filters.category) where.category = filters.category;
-    if (filters.status) where.status = filters.status;
+    
+    // Visibility Logic:
+    // 1. If a specific status is requested, use it, but ADMIN/SCHOOL owner check still applies for DRAFT
+    // 2. If NO status is requested, default to NOT showing DRAFT for public views.
+    
+    if (filters.status) {
+      if (filters.status === 'DRAFT') {
+        // Only school admins or global admins can search for DRAFT
+        if (!user || (user.role !== 'ADMIN' && user.role !== 'SCHOOL')) {
+          where.status = { not: 'DRAFT' }; // Fallback to non-draft
+        } else {
+          where.status = 'DRAFT';
+          // If SCHOOL, only show their own drafts
+          if (user.role === 'SCHOOL') where.school = { adminId: user.id };
+        }
+      } else {
+        where.status = filters.status;
+      }
+    } else {
+      // DEFAULT: Hide DRAFT events from everyone except the owning school or ADMIN
+      if (!user || user.role !== 'ADMIN') {
+        const publicStates = ['PUBLISHED', 'OPEN', 'ONGOING', 'COMPLETED'];
+        if (user?.role === 'SCHOOL') {
+           // School sees public states OR their own drafts
+           where.OR = [
+             { status: { in: publicStates } },
+             { AND: [{ status: 'DRAFT' }, { school: { adminId: user.id } }] }
+           ];
+        } else {
+           where.status = { in: publicStates };
+        }
+      }
+    }
+
     if (filters.search) where.title = { contains: filters.search, mode: 'insensitive' };
+    
     return prisma.event.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
-        school: { select: { id: true, name: true, location: true } },
+        school: { select: { id: true, name: true, location: true, adminId: true } },
         _count: { select: { registrations: true } },
       },
     });
@@ -44,6 +78,7 @@ class EventService {
             id: true,
             name: true,
             location: true,
+            adminId: true,
             admin: { select: { id: true, name: true, email: true } }
           }
         },

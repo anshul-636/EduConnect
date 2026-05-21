@@ -81,6 +81,16 @@ const EventDetail = () => {
     finally { setRegistering(false); }
   };
 
+  const handleStatusChange = async (newStatus) => {
+    try {
+      const res = await eventService.update(id, { status: newStatus });
+      setEvent(res.data);
+      setMsg({ text: `Event is now ${newStatus}!`, ok: true });
+    } catch (err) {
+      setMsg({ text: err.response?.data?.message || 'Failed to update status.', ok: false });
+    }
+  };
+
   if (loading) return <Layout><Loader /></Layout>;
   if (!event) return null;
 
@@ -190,11 +200,27 @@ const EventDetail = () => {
               </button>
             </div>
           )}
-          {/* Organizer Manage Results button */}
-          {user?.role === 'SCHOOL' && (
-            <div className='mt-4'>
-              <button onClick={() => navigate(`/events/${id}/results`)}
-                className='px-5 py-2.5 bg-dark-700 border border-dark-600 text-sm font-semibold rounded-xl hover:bg-dark-600 text-dark-100'>
+          {/* Organizer Management Panel */}
+          {user?.role === 'SCHOOL' && (event.school?.adminId === user.id || event.school?.admin?.id === user.id) && (
+            <div className='mt-8 pt-8 border-t border-dark-800 flex flex-wrap items-center gap-4'>
+              <div className='flex items-center gap-3 bg-dark-800 p-2 pl-4 rounded-xl border border-dark-700'>
+                <span className='text-xs font-bold uppercase tracking-wider text-dark-400'>Update Status:</span>
+                <select 
+                  value={event.status} 
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  className='bg-dark-900 text-dark-100 text-sm font-semibold py-1.5 px-3 rounded-lg border border-dark-700 focus:outline-none focus:border-brand-500'
+                >
+                  <option value='DRAFT'>DRAFT (Private)</option>
+                  <option value='PUBLISHED'>PUBLISHED (Visible)</option>
+                  <option value='OPEN'>OPEN (Accepting Reg)</option>
+                  <option value='ONGOING'>ONGOING</option>
+                  <option value='COMPLETED'>COMPLETED</option>
+                </select>
+              </div>
+              <button 
+                onClick={() => navigate(`/events/${id}/results`)}
+                className='px-5 py-2.5 bg-brand-500/10 border border-brand-500/30 text-brand-400 text-sm font-bold rounded-xl hover:bg-brand-500/20 transition-all'
+              >
                 ⚙️ Manage Results & Answer Key
               </button>
             </div>

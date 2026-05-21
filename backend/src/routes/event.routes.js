@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { body } = require('express-validator');
 const { create, getAll, getById, update, register, getRegistrations, getMyRegistrations, submitResults, getLeaderboard, updateAnswerKey, remove } = require('../controllers/event.controller');
-const { protect } = require('../middleware/auth.middleware');
+const { protect, optionalProtect } = require('../middleware/auth.middleware');
 const { restrictTo } = require('../middleware/role.middleware');
 
 const router = Router();
@@ -12,7 +12,7 @@ const eventValidation = [
   body('category').isIn(['DEBATE','QUIZ','SCIENCE','SPORTS','ARTS','OTHER']).withMessage('Invalid category.'),
 ];
 
-router.get('/', getAll);
+router.get('/', optionalProtect, getAll);
 router.get('/my', protect, restrictTo('STUDENT'), getMyRegistrations);
 router.get('/:id', getById);
 router.post('/', protect, restrictTo('SCHOOL'), eventValidation, create);

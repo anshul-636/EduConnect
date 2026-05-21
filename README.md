@@ -25,7 +25,8 @@
 Built with a modern microservices architecture, EduConnect features:
 - **Role-Based Access Control** (Admin, School, Teacher, Student)
 - **Real-Time Notifications** via WebSockets
-- **Premium AI Experience**: Markdown-rich chat, in-chat PDF uploads, and Expert Planning
+- **Account Life-Cycle Management**: Temporary deactivation, permanent deletion, and instant re-activation
+- **Premium AI Experience**: Markdown-rich chat, in-chat PDF uploads, and Expert Planning (Elite Strategy Consultant Persona)
 - **Automated Certificate Generation** with PDFKit
 - **Secure Authentication** via JWT + Google OAuth 2.0
 
@@ -60,7 +61,7 @@ Built with a modern microservices architecture, EduConnect features:
 ### 🏆 Leaderboard & Certificates
 - Real-time student rankings by score across events
 - School-level and event-level leaderboards
-- **Automated PDF certificate generation** (Participation, Winner, Runner-Up)
+- **High-Performance Auto-Dispatch**: Parallel concurrent processing for generating and mailing PDF certificates (Participation, Winner, Runner-Up) in one click
 
 ### 🤖 AI-Powered Features
 | Feature | Description | Technology |
@@ -72,7 +73,9 @@ Built with a modern microservices architecture, EduConnect features:
 
 ### 🔐 Authentication & Security
 - **JWT-based authentication** with access & refresh tokens
-- **Google OAuth 2.0** for seamless sign-in
+- **Google OAuth 2.0** with secure role persistence (School, Admin, Teacher, or Student)
+- **Account Settings**: Premium dashboard for deactivation (Soft Disable) and irreversible account deletion (Data Purge)
+- **Instant Re-activation**: One-click profile restoration for recently disabled accounts
 - **Email verification** with OTP
 - **Password reset** flow via email
 - Role-based route protection on both frontend and backend
@@ -144,7 +147,7 @@ Built with a modern microservices architecture, EduConnect features:
 │                        │                     │               │
 │                ┌───────▼───────┐     ┌───────▼──────┐        │
 │                │  PostgreSQL   │     │   ChromaDB   │        │
-│                │  (Prisma ORM) │     │  (Vectors)   │        │
+│                │  (Secure Purge) │     │  (Vectors)   │        │
 │                └───────────────┘     └──────────────┘        │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -350,8 +353,11 @@ The AI service will be running on **http://localhost:8001**
 | `POST` | `/api/v1/auth/verify-email` | Verify email with OTP |
 | `POST` | `/api/v1/auth/forgot-password` | Request password reset |
 | `POST` | `/api/v1/auth/reset-password` | Reset password with OTP |
-| `GET` | `/api/v1/auth/google` | Initiate Google OAuth |
+| `GET` | `/api/v1/auth/google` | Initiate Google OAuth (with `role` param) |
 | `GET` | `/api/v1/auth/google/callback` | Google OAuth callback |
+| `POST` | `/api/v1/auth/deactivate` | Temporarily disable account |
+| `DELETE` | `/api/v1/auth/delete-me` | Permanently delete account & data |
+| `POST` | `/api/v1/auth/reactivate` | Securely restore a disabled account |
 
 ### Event Endpoints
 
