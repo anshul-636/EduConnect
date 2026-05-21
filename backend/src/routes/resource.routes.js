@@ -15,7 +15,7 @@ const resourceValidation = [
 
 router.get('/', getAll);
 router.get('/:id', getById);
-router.post('/', protect, restrictTo('SCHOOL','TEACHER'), localUpload.single('file'), resourceValidation, create);
+router.post('/', protect, restrictTo('SCHOOL','TEACHER','STUDENT','ADMIN'), localUpload.single('file'), resourceValidation, create);
 
 router.delete('/:id', protect, restrictTo('SCHOOL','TEACHER','ADMIN'), remove);
 router.post('/:id/upvote', protect, upvote);
