@@ -19,6 +19,9 @@ const EventResults = () => {
   const [savingAK, setSavingAK] = useState(false);
   const [msg, setMsg] = useState({ text: '', ok: false });
   const [tab, setTab] = useState('scores'); // 'scores' | 'leaderboard' | 'answerkey'
+  const [autoDispatch, setAutoDispatch] = useState(true);
+  const [dispatching, setDispatching] = useState(false);
+  const [dispatched, setDispatched] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -55,7 +58,25 @@ const EventResults = () => {
       const results = registrations.map(r => ({ registrationId: r.id, score: parseFloat(scores[r.id]) || 0 }));
       const data = await eventService.submitResults(id, results);
       setLeaderboard(data.data);
-      setMsg({ text: 'Results submitted! Leaderboard is now live.', ok: true });
+      
+      let successMsg = 'Results published! Leaderboard is now live.';
+      
+      if (autoDispatch) {
+        setDispatching(true);
+        try {
+          const certificateService = (await import('../services/certificateService')).default;
+          await certificateService.sendEmail(id);
+          successMsg += ' 🎓 Certificates have also been generated and dispatched to all participants!';
+          setDispatched(true);
+        } catch (certErr) {
+          successMsg += ' ⚠️ Results published, but certificate dispatch encountered an issue.';
+          console.error(certErr);
+        } finally {
+          setDispatching(false);
+        }
+      }
+      
+      setMsg({ text: successMsg, ok: true });
       setTab('leaderboard');
     } catch (err) { setMsg({ text: err.response?.data?.message || 'Failed.', ok: false }); }
     finally { setSubmitting(false); }
@@ -140,10 +161,14 @@ const EventResults = () => {
                 </div>
               </div>
             ))}
+            <div className='flex items-center gap-3 p-4 bg-brand-500/10 border border-brand-500/20 rounded-xl mb-2'>
+              <input type='checkbox' id='autodispatch' checked={autoDispatch} onChange={e => setAutoDispatch(e.target.checked)} className='w-5 h-5 rounded border-dark-600 bg-dark-800 text-brand-500 focus:ring-brand-500 focus:ring-offset-dark-900 cursor-pointer' />
+              <label htmlFor='autodispatch' className='text-sm text-dark-100 font-medium cursor-pointer'>🚀 Automatically generate & email high-fidelity certificates to all participants</label>
+            </div>
             {registrations.length > 0 && (
-              <button onClick={handleSubmitResults} disabled={submitting}
+              <button onClick={handleSubmitResults} disabled={submitting || dispatching}
                 className='btn-primary w-full mt-2'>
-                {submitting ? 'Submitting...' : '🚀 Submit Results & Publish Leaderboard'}
+                {submitting ? 'Submitting Scores...' : dispatching ? '🎓 Generating & Mailing Certificates...' : '🚀 Submit Results & Publish Leaderboard'}
               </button>
             )}
           </div>
@@ -152,7 +177,7 @@ const EventResults = () => {
         {/* Leaderboard Tab */}
         {tab === 'leaderboard' && (
           <div className='space-y-6'>
-            {leaderboard.length > 0 && (
+            {leaderboard.length > 0 && !dispatched && (
               <div className='card flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-brand-500/5 border border-brand-500/20'>
                 <div>
                   <h2 className='font-semibold text-brand-400'>🎓 Automated Certificates & Prize Dispatches</h2>
@@ -173,6 +198,13 @@ const EventResults = () => {
                   )}
                 </button>
               </div>
+            )}
+            
+            {dispatched && (
+               <div className='card bg-green-500/5 border border-green-500/20 py-3 flex items-center gap-3'>
+                 <span className='text-xl'>✅</span>
+                 <p className='text-sm text-green-400 font-medium'>All certificates successfully generated and dispatched to participants.</p>
+               </div>
             )}
 
             <div className='card'>

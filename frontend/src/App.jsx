@@ -19,12 +19,14 @@ import UploadResource from './pages/UploadResource';
 import Leaderboard from './pages/Leaderboard';
 import EventLeaderboard from './pages/EventLeaderboard';
 import Certificates from './pages/Certificates';
+import EventResults from './pages/EventResults';
 import Forum from './pages/Forum';
 import ForumPost from './pages/ForumPost';
 import Unauthorized from './pages/Unauthorized';
 import StudyAssistant from './pages/ai/StudyAssistant';
 import PlatformBot from './pages/ai/PlatformBot';
 import StudyPlanner from './pages/ai/StudyPlanner';
+import Settings from './pages/dashboard/Settings';
 
 const App = () => (
   <BrowserRouter>
@@ -42,6 +44,7 @@ const App = () => (
       <Route path='/events' element={<ProtectedRoute><Events /></ProtectedRoute>} />
       <Route path='/events/create' element={<ProtectedRoute><RoleRoute roles={['SCHOOL']}><CreateEvent /></RoleRoute></ProtectedRoute>} />
       <Route path='/events/:id' element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
+      <Route path='/events/:id/results' element={<ProtectedRoute><RoleRoute roles={['SCHOOL']}><EventResults /></RoleRoute></ProtectedRoute>} />
       <Route path='/resources' element={<ProtectedRoute><Resources /></ProtectedRoute>} />
       <Route path='/resources/upload' element={<ProtectedRoute><RoleRoute roles={['SCHOOL','TEACHER']}><UploadResource /></RoleRoute></ProtectedRoute>} />
       <Route path='/resources/:id' element={<ProtectedRoute><ResourceDetail /></ProtectedRoute>} />
@@ -54,6 +57,7 @@ const App = () => (
       <Route path='/ai/study' element={<ProtectedRoute><StudyAssistant /></ProtectedRoute>} />
       <Route path='/ai/bot' element={<ProtectedRoute><PlatformBot /></ProtectedRoute>} />
       <Route path='/ai/planner' element={<ProtectedRoute><StudyPlanner /></ProtectedRoute>} />
+      <Route path='/settings' element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
       <Route path='/dashboard/student' element={<ProtectedRoute><RoleRoute roles={['STUDENT']}><StudentDashboard /></RoleRoute></ProtectedRoute>} />
       <Route path='/dashboard/teacher' element={<ProtectedRoute><RoleRoute roles={['TEACHER']}><TeacherDashboard /></RoleRoute></ProtectedRoute>} />

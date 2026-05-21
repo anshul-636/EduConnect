@@ -41,6 +41,7 @@ export const StudentDashboard = () => {
           <NavCard icon='🏆' label='Leaderboard' desc='See top performers' to='/leaderboard' gradient='from-amber-500 to-orange-600' />
           <NavCard icon='🏅' label='My Certificates' desc='Download your achievements' to='/certificates' gradient='from-green-500 to-teal-600' />
           <NavCard icon='💬' label='Forum' desc='Discuss and collaborate' to='/forum' gradient='from-purple-500 to-indigo-600' />
+          <NavCard icon='⚙️' label='Account Settings' desc='Manage profile and security' to='/settings' gradient='from-dark-700 to-dark-800' />
         </div>
         <h2 className='font-display font-semibold text-dark-200 mb-4 text-sm uppercase tracking-wide'>AI Features</h2>
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
@@ -69,6 +70,7 @@ export const TeacherDashboard = () => {
           <NavCard icon='🏫' label='Schools' desc='Browse schools' to='/schools' gradient='from-green-500 to-teal-600' />
           <NavCard icon='💬' label='Forum' desc='Discuss with students' to='/forum' gradient='from-purple-500 to-indigo-600' />
           <NavCard icon='🤖' label='Study Assistant' desc='AI-powered study help' to='/ai/study' gradient='from-violet-500 to-purple-600' />
+          <NavCard icon='⚙️' label='Settings' desc='Account and security' to='/settings' gradient='from-dark-700 to-dark-800' />
         </div>
       </div>
     </Layout>
@@ -89,6 +91,7 @@ export const SchoolDashboard = () => (
         <NavCard icon='📤' label='Upload Resource' desc='Share study material' to='/resources/upload' gradient='from-amber-500 to-orange-600' />
         <NavCard icon='📚' label='Resources' desc='Browse all resources' to='/resources' gradient='from-green-500 to-teal-600' />
         <NavCard icon='🏆' label='Leaderboard' desc='View rankings' to='/leaderboard' gradient='from-purple-500 to-indigo-600' />
+        <NavCard icon='⚙️' label='Settings' desc='Manage school account' to='/settings' gradient='from-dark-700 to-dark-800' />
       </div>
     </div>
   </Layout>
@@ -106,6 +109,7 @@ export const AdminDashboard = () => (
         <NavCard icon='📅' label='All Events' desc='Monitor all events' to='/events' gradient='from-pink-500 to-rose-600' />
         <NavCard icon='📚' label='All Resources' desc='Review uploaded content' to='/resources' gradient='from-cyan-500 to-blue-600' />
         <NavCard icon='💬' label='Forum' desc='Moderate discussions' to='/forum' gradient='from-amber-500 to-orange-600' />
+        <NavCard icon='⚙️' label='Platform Settings' desc='Platform-wide controls' to='/settings' gradient='from-red-600 to-orange-700' />
       </div>
     </div>
   </Layout>

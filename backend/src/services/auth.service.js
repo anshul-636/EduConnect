@@ -57,6 +57,34 @@ class AuthService {
     if (!user || !user.isActive) { const err = new Error('User not found.'); err.statusCode = 401; throw err; }
     return { accessToken: createAccessToken({ userId: user.id, role: user.role }), refreshToken };
   }
+
+  async deactivate(userId) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { isActive: false },
+    });
+  }
+
+  async reactivate(userId) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { isActive: true },
+    });
+  }
+
+  async delete(userId) {
+    return prisma.user.delete({ where: { id: userId } });
+  }
+
+  async validateCredentials({ email, password }) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) { const err = new Error('Invalid email or password.'); err.statusCode = 401; throw err; }
+
+    const isMatch = await verifyPassword(password, user.password);
+    if (!isMatch) { const err = new Error('Invalid email or password.'); err.statusCode = 401; throw err; }
+
+    return user;
+  }
 }
 
 module.exports = new AuthService();
