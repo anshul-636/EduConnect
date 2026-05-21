@@ -83,81 +83,100 @@ async def build_plan_node(state: StudyPlanState) -> StudyPlanState:
         role = state.get("role", "STUDENT")
 
         if role == "TEACHER":
-            prompt = f"""You are an Expert Curriculum Strategist & Master Educator for the EduConnect platform. 
-Create a professional {days}-day Lesson & Curriculum Roadmap for:
+            prompt = f"""You are a Master Curriculum Architect for EduConnect. 
+Generate a comprehensive {days}-day Lesson & Syllabus Roadmap.
+TARGET: {state.get('event_title', 'Curriculum Syllabus')}
+DATE: {state.get('event_date', 'TBA')}
+PLANNER: {state.get('student_name', 'Teacher')}
 
-Objective: {state.get('event_title', 'Curriculum Syllabus')}
-Category: {state.get('event_category', 'Educational Core')}
-Educator: {state.get('student_name', 'Teacher')}
-Timeline: {days} Days
+STRICT FORMATTING REQUIREMENTS:
+1. Use ### for main section headers.
+2. Use **Bold** for critical pedagogical terms.
+3. PROVIDE A FULL TABLE for the daily schedule.
+4. DO NOT BE VAGUE. Specify actual topics and classroom methods.
 
-Reference Blueprint:
-{resources_text if resources_text else 'Standard Academic Standards'}
+EXAMPLE STRUCTURE:
+### 🎯 Executive Learning Objectives
+- Define the 3 core competencies...
 
-Structure your roadmap using Markdown:
-1. ### 🎯 Instructional Goals: Set the primary outcomes for this period.
-2. ### 📅 Daily Curriculum Breakdown: Use a table format with | Day | Topic | Classroom Activities | Learning Outcome |
-3. ### 💡 Pedagogical Tips: Provide 3 expert strategies for student engagement.
-4. ### 📝 Assessment Checkpoints: List specific ways to verify knowledge retention.
+### 📅 Curriculum Execution Timeline
+| Day | Core Topic | Classroom Methodology | Student Resource | Milestone |
+|---|---|---|---|---|
+| 1 | Unit A | Socratic Seminar | PDF X | Recap Quiz |
 
-Use a professional, encouraging, and authoritative educator tone."""
+### 💡 Expert Educator Insights
+- Pro-tip for classroom management...
+"""
         elif role == "SCHOOL":
-            prompt = f"""You are a Senior Institutional Strategist & School Principal Advisor for the EduConnect platform. 
-Create a comprehensive {days}-day Operational Roadmap and Stakeholder Timeline for:
+            prompt = f"""You are a Senior Institutional Strategist for EduConnect. 
+Generate a professional {days}-day Operational & Logistics Roadmap.
+TARGET: {state.get('event_title', 'Operational Objective')}
+DATE: {state.get('event_date', 'TBA')}
+LEAD: {state.get('student_name', 'Principal')}
 
-Milestone: {state.get('event_title', 'Operational Objective')}
-Institutional Area: {state.get('event_category', 'School Operations')}
-School Head: {state.get('student_name', 'Principal')}
-Timeline: {days} Days
+STRICT FORMATTING REQUIREMENTS:
+1. Professional Institutional Tone.
+2. Detailed Markdown Tables.
+3. Focus on Stakeholders and Resource Allocation.
 
-Operational Context:
-{resources_text if resources_text else 'School Policy Frameworks'}
+EXAMPLE STRUCTURE:
+### 🏛️ Institutional Strategic Vision
+- High-level KPIs...
 
-Structure your roadmap using Markdown:
-1. ### 🏛️ Strategic Vision: Define the high-level success metrics for this roadmap.
-2. ### 🗓️ Operational Timeline: provide a daily schedule with | Day | Operational Priority | Stakeholder Coordination | Deliverable |
-3. ### 👥 Staff Directives: List key responsibilities for department heads and support staff.
-4. ### 📊 Risk Mitigation: Identify potential bottlenecks and mitigation strategies.
+### 🗓️ Operational Roadmap
+| Day | Priority | Stakeholder Coordination | Resource Alignment | Target |
+|---|---|---|---|---|
 
-Use a formal, decisive, and highly professional institutional tone."""
+### 👥 Leadership Directives
+- Tasks for HODs...
+"""
         elif role == "ADMIN":
-            prompt = f"""You are a Lead Systems Administrator & Security Auditor for the EduConnect platform. 
-Create a high-precision {days}-day Platform Deployment & Safety Playbook for:
+            prompt = f"""You are a Lead Platform Architect & Security Auditor for EduConnect. 
+Generate a high-precision {days}-day Systems Deployment & Rollout Playbook.
+SYSTEM GOAL: {state.get('event_title', 'Systems Milestone')}
+DATE: {state.get('event_date', 'TBA')}
+ENGINEER: {state.get('student_name', 'Admin')}
 
-Technical Goal: {state.get('event_title', 'Systems Milestone')}
-Domain: {state.get('event_category', 'Infrastructure & Security')}
-Lead Operator: {state.get('student_name', 'Admin')}
-Timeline: {days} Days
+STRICT FORMATTING REQUIREMENTS:
+1. Technical, Precise Methodology.
+2. Security-First Protocols.
+3. Verification/Test Case tables.
 
-Technical Baseline:
-{resources_text if resources_text else 'Core System Documentation'}
+EXAMPLE STRUCTURE:
+### 🛡️ Pre-Flight Security Constraints
+- Check binary integrity...
 
-Structure your playbook using Markdown:
-1. ### 🛡️ Security Protocol: Define the safety constraints and pre-check requirements.
-2. ### 🚀 Deployment Workflow: Provide a technical timeline with | Day | Module/Service | Action Items | Verification Step |
-3. ### 🛠️ Technical Stack Checklist: List essential configurations and backup points.
-4. ### 🚨 Rollback & Contingency: Outline the immediate recovery steps if tests fail.
+### 🚀 Technical Rollout Timeline
+| Day | System Domain | Action Plan | Verification Log | Status |
+|---|---|---|---|---|
 
-Use a hyper-precise, technical, and methodical tone."""
+### 🚨 Failover & Recovery
+- Step-by-step rollback...
+"""
         else: # STUDENT
-            prompt = f"""You are an Expert Study Success Coach for the EduConnect platform. 
-Create an elite {days}-day Study Mastery Roadmap for:
+            prompt = f"""You are an Elite Study Performance Coach for EduConnect. 
+Generate a personalized {days}-day High-Performance Study Roadmap.
+GOAL: {state.get('event_title', 'Learning Objective')}
+STUDENT: {state.get('student_name', 'Scholar')}
+DAYS TO GO: {days}
 
-Goal: {state.get('event_title', 'Exam/Event Preparation')}
-Category: {state.get('event_category', 'Academic Milestone')}
-Student: {state.get('student_name', 'Scholar')}
-Timeline: {days} Days
+STRICT FORMATTING REQUIREMENTS:
+1. Motivational yet Scientifically Grounded.
+2. Focus on Active Recall & Spaced Repetition.
+3. Daily Focus Blocks in a Table.
 
-Study Base:
-{resources_text if resources_text else 'Targeted Learning Materials'}
+EXAMPLE STRUCTURE:
+### 🚀 Mission Success Brief
+- Why this matters...
 
-Structure your roadmap using Markdown:
-1. ### 🚀 Success Mission: A motivating summary of the study goal.
-2. ### 📅 Mastery Schedule: Provide a structured table with | Day | Focus Topic | Study Activities | Mastery Goal |
-3. ### 🧠 Cognitive Tips: Suggest 3 specific memory or focus técnicas (e.g., Active Recall, Pomodoro).
-4. ### ✅ Verification: A final checklist to ensure event readiness.
+### 📅 Daily Mastery Blocks
+| Day | Focus Topic | Active Study Strategy | Success Marker | Intensity |
+|---|---|---|---|---|
 
-Use a friendly, expert, and highly motivating coaching tone."""
+### 🧠 Expert Coaching Tips
+- Technique X for deep work...
+"""
+
 
         llm = get_llm()
         response = await llm.ainvoke([HumanMessage(content=prompt)])

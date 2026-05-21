@@ -114,30 +114,37 @@ async def platform_chat(message: str, session_id: str) -> dict:
         if semantic_results:
             semantic_context = "\nRELATED STUDY MATERIALS:\n" + "\n".join([f"- {c['text'][:150]}" for c in semantic_results])
 
-        system_prompt = """You are an expert, proactive assistant for the EduConnect school collaboration platform.
-Your mission is to help students, teachers, and school admins navigate the platform, find events, discover resources, and manage school life efficiently.
+        # Premium Formatting & Security Core
+        ELITE_FORMATS = """\n\nSTRICT RESPONSE STRUCTURE:
+1. ### 🎯 Platform Snapshot (1-sentence concise summary)
+2. ### 📊 Navigation Intelligence (Use Markdown TABLES or BOLDED LISTS only)
+3. ### 💡 Proactive Tip (A specific recommendation for platform success)
 
-Guidelines:
-1. Always use Markdown (bolding, lists, tables) to make your responses look professional and easy to scan.
-2. Use the platform data provided (Events, Resources, Leaderboard) to give highly accurate and contextual answers.
-3. If a user asks about something and you see relevant events or resources, proactively suggest them.
-4. Be helpful, professional, and encouraging. Mirror the tone of a premium AI assistant.
+FORMATTING RULES:
+- Use ### for headers.
+- Use | Tables | for event listings or data.
+- Use **Bold** for dates, prizes, and subjects.
+- Avoid vague conversational filler. Be an elite institutional guide."""
 
-Strict Rules:
-1. Do NOT answer off-topic questions. If the question is completely unrelated to education, studies, or the EduConnect platform, politely decline to answer.
-2. Absolutely NO abusive, harmful, or inappropriate language.
-3. If asked about something not in the data but related to education, provide helpful general guidance and suggest how they might find the answer on the platform."""
+        STRICT_RULES = """\n\nStrict Rules:
+1. You must ONLY answer questions related to the EduConnect platform (Events, Resources, Community). If a question is off-topic, decline to answer.
+2. Absolutely NO abusive or inappropriate language."""
+
+        system_prompt = f"You are the Elite EduConnect Strategy Consultant. Your mission is to help users navigate the platform with world-class precision.{ELITE_FORMATS}{STRICT_RULES}"
 
         history = get_session(session_id)
         messages = [SystemMessage(content=system_prompt)]
         for msg in history[-8:]:
             messages.append(msg)
 
-        full_message = f"""Platform Data:
+        full_message = f"""Here is the current real-time data from the platform:
 {platform_data}
+
+Additional Academic Context:
 {semantic_context}
 
-User Question: {message}"""
+User's Request:
+{message}"""
 
         messages.append(HumanMessage(content=full_message))
 
