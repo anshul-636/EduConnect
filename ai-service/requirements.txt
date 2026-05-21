@@ -13,3 +13,4 @@ numpy
 python-multipart
 pydantic-settings
 langgraph
+langchain-groq
