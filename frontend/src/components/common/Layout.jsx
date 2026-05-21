@@ -15,6 +15,7 @@ const NAV_ITEMS = {
     { icon: '💬', label: 'Forum', to: '/forum' },
     { icon: '🎓', label: 'Study Assistant', to: '/ai/study' },
     { icon: '🗓️', label: 'Study Planner', to: '/ai/planner' },
+    { icon: '⚙️', label: 'Settings', to: '/settings' },
   ],
   TEACHER: [
     { icon: '🏠', label: 'Dashboard', to: '/dashboard/teacher' },
@@ -25,6 +26,7 @@ const NAV_ITEMS = {
     { icon: '💬', label: 'Forum', to: '/forum' },
     { icon: '📝', label: 'Lesson Assistant', to: '/ai/study' },
     { icon: '📅', label: 'Lesson Planner', to: '/ai/planner' },
+    { icon: '⚙️', label: 'Settings', to: '/settings' },
   ],
   SCHOOL: [
     { icon: '🏠', label: 'Dashboard', to: '/dashboard/school' },
@@ -37,6 +39,7 @@ const NAV_ITEMS = {
     { icon: '💬', label: 'Forum', to: '/forum' },
     { icon: '📊', label: 'School Analyst', to: '/ai/study' },
     { icon: '🗓️', label: 'Academic Planner', to: '/ai/planner' },
+    { icon: '⚙️', label: 'Settings', to: '/settings' },
   ],
   ADMIN: [
     { icon: '🏠', label: 'Dashboard', to: '/dashboard/admin' },
@@ -47,6 +50,7 @@ const NAV_ITEMS = {
     { icon: '💬', label: 'Forum', to: '/forum' },
     { icon: '🛡️', label: 'Security Auditor', to: '/ai/study' },
     { icon: '⚙️', label: 'Platform Planner', to: '/ai/planner' },
+    { icon: '🔑', label: 'Settings', to: '/settings' },
   ],
 };
 

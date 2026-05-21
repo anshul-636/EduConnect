@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Layout from '../../components/common/Layout';
 import ChatWindow from '../../components/ai/ChatWindow';
 import aiService from '../../services/aiService';
+import resourceService from '../../services/resourceService';
 
 const SUGGESTIONS = [
   'Which events are open for registration?',
@@ -16,7 +17,7 @@ const PlatformBot = () => {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: 'Hi! I am your EduConnect assistant 👋\n\nI can help you find events, resources, leaderboard rankings, and anything about the platform. What would you like to know?'
+      content: 'Hi! I am your EduConnect assistant 👋\n\nI can help you find events, resources, leaderboard rankings, and anything about the platform. You can even upload a PDF here and I will help you analyze it! What would you like to know?'
     }
   ]);
   const [loading, setLoading] = useState(false);
@@ -37,6 +38,40 @@ const PlatformBot = () => {
         content: 'Error connecting to AI service.'
       }]);
     } finally { setLoading(false); }
+  };
+
+  const handleUpload = async (file) => {
+    if (!file || file.type !== 'application/pdf') {
+      alert('Please upload a PDF file.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', file.name.replace('.pdf', ''));
+    formData.append('type', 'PDF');
+    formData.append('subject', 'General');
+    formData.append('difficulty', 'BEGINNER');
+
+    setLoading(true);
+    setMessages(prev => [...prev, { role: 'assistant', content: `📂 *Uploading and indexing "${file.name}"...*` }]);
+
+    try {
+      await resourceService.upload(formData);
+      setMessages(prev => {
+        const next = [...prev];
+        next[next.length - 1] = { 
+          role: 'assistant', 
+          content: `✅ **Successfully added "${file.name}" to the platform.** I've indexed the content and can now answer any questions about it!` 
+        };
+        return next;
+      });
+    } catch (err) {
+      console.error(err);
+      setMessages(prev => [...prev, { role: 'assistant', content: `❌ *Failed to upload "${file.name}". Please try again.*` }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -61,6 +96,7 @@ const PlatformBot = () => {
           <ChatWindow
             messages={messages}
             onSend={handleSend}
+            onUpload={handleUpload}
             loading={loading}
             placeholder='Ask about events, resources, leaderboard...'
           />

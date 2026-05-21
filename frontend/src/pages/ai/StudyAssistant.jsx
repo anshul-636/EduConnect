@@ -78,77 +78,11 @@ const StudyAssistant = () => {
   useEffect(() => {
     resourceService.getAll({ type: 'PDF' })
       .then(res => {
-        const raw = res.data || [];
-        const role = user?.role || 'STUDENT';
-        let filtered = [];
-        
-        if (role === 'TEACHER') {
-          filtered = raw.filter(r => 
-            /lesson|curriculum|syllabus|worksheet|grading|quiz|teacher/i.test(r.title + ' ' + (r.description || ''))
-          );
-          if (filtered.length === 0) {
-            filtered = [
-              { id: 'mock-t1', title: 'CBSE Class 10 Math Curriculum Outline', description: 'Official syllabus guidelines for lesson mapping', type: 'PDF' },
-              { id: 'mock-t2', title: 'Grade 9 Science Lab Safety Worksheet', description: 'Practical session outlines for educators', type: 'PDF' }
-            ];
-          }
-        } else if (role === 'SCHOOL') {
-          filtered = raw.filter(r => 
-            /policy|guideline|manual|bulletin|compliance|meeting|operation|school/i.test(r.title + ' ' + (r.description || ''))
-          );
-          if (filtered.length === 0) {
-            filtered = [
-              { id: 'mock-s1', title: 'Annual Safety & Operational Audit Checklist', description: 'School compliance guidelines manual', type: 'PDF' },
-              { id: 'mock-s2', title: 'Parent-Teacher Council Communication Blueprint', description: 'Newsletter outlines and term coordination templates', type: 'PDF' }
-            ];
-          }
-        } else if (role === 'ADMIN') {
-          filtered = raw.filter(r => 
-            /backup|server|security|config|audit|privacy|admin/i.test(r.title + ' ' + (r.description || ''))
-          );
-          if (filtered.length === 0) {
-            filtered = [
-              { id: 'mock-a1', title: 'System Security Configuration Manual', description: 'Platform health and backend backup instructions', type: 'PDF' },
-              { id: 'mock-a2', title: 'Data Privacy Compliance & User Terms Audit', description: 'Safety monitoring framework rules', type: 'PDF' }
-            ];
-          }
-        } else { // STUDENT
-          filtered = raw.filter(r => 
-            !/policy|manual|backup|server|compliance/i.test(r.title + ' ' + (r.description || ''))
-          );
-          if (filtered.length === 0) {
-            filtered = [
-              { id: 'mock-st1', title: 'Advanced Physics Kinematics Formula Guide', description: 'Formulas and solved exam prep notes', type: 'PDF' },
-              { id: 'mock-st2', title: 'World History Renaissance Summary', description: 'Renaissance highlights and reading checklist', type: 'PDF' }
-            ];
-          }
-        }
-        setResources(filtered);
+        setResources(res.data || []);
       })
       .catch(err => {
         console.error(err);
-        const role = user?.role || 'STUDENT';
-        if (role === 'TEACHER') {
-          setResources([
-            { id: 'mock-t1', title: 'CBSE Class 10 Math Curriculum Outline', type: 'PDF' },
-            { id: 'mock-t2', title: 'Grade 9 Science Lab Safety Worksheet', type: 'PDF' }
-          ]);
-        } else if (role === 'SCHOOL') {
-          setResources([
-            { id: 'mock-s1', title: 'Annual Safety & Operational Audit Checklist', type: 'PDF' },
-            { id: 'mock-s2', title: 'Parent-Teacher Council Communication Blueprint', type: 'PDF' }
-          ]);
-        } else if (role === 'ADMIN') {
-          setResources([
-            { id: 'mock-a1', title: 'System Security Configuration Manual', type: 'PDF' },
-            { id: 'mock-a2', title: 'Data Privacy Compliance & User Terms Audit', type: 'PDF' }
-          ]);
-        } else {
-          setResources([
-            { id: 'mock-st1', title: 'Advanced Physics Kinematics Formula Guide', type: 'PDF' },
-            { id: 'mock-st2', title: 'World History Renaissance Summary', type: 'PDF' }
-          ]);
-        }
+        setResources([]);
       });
   }, [user?.role]);
 
@@ -187,6 +121,47 @@ const StudyAssistant = () => {
 
   const cfg = assistantConfig[user?.role] || assistantConfig.STUDENT;
   const templates = presetTemplates[user?.role] || presetTemplates.STUDENT;
+
+  const handleUpload = async (file) => {
+    if (!file || file.type !== 'application/pdf') {
+      alert('Please upload a PDF file.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', file.name.replace('.pdf', ''));
+    formData.append('type', 'PDF');
+    formData.append('subject', 'General');
+    formData.append('difficulty', 'BEGINNER');
+
+    setLoading(true);
+    setMessages(prev => [...prev, { role: 'assistant', content: `📂 *Uploading and indexing "${file.name}"...*` }]);
+
+    try {
+      const res = await resourceService.upload(formData);
+      const newResource = res.data;
+      
+      // Update resources list
+      setResources(prev => [newResource, ...prev]);
+      // Auto-select the new resource
+      setSelectedResource(newResource);
+      
+      setMessages(prev => {
+        const next = [...prev];
+        next[next.length - 1] = { 
+          role: 'assistant', 
+          content: `✅ **Successfully uploaded and indexed "${file.name}".** I'm now ready to answer questions about this document!` 
+        };
+        return next;
+      });
+    } catch (err) {
+      console.error(err);
+      setMessages(prev => [...prev, { role: 'assistant', content: `❌ *Failed to upload "${file.name}". Please try again.*` }]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const welcomeScreen = (
     <div className='py-6 px-4 max-w-2xl mx-auto space-y-6'>
@@ -277,6 +252,7 @@ const StudyAssistant = () => {
           <ChatWindow
             messages={messages}
             onSend={handleSend}
+            onUpload={handleUpload}
             loading={loading}
             placeholder={cfg.placeholder}
             welcomeScreen={welcomeScreen}

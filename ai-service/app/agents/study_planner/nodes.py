@@ -22,6 +22,19 @@ def get_llm():
     )
 
 async def fetch_event_node(state: StudyPlanState) -> StudyPlanState:
+    event_id = state.get("event_id", "")
+    # Check if event_id is a valid UUID (database record)
+    is_uuid = len(event_id) == 36 and "-" in event_id
+    
+    if not is_uuid:
+        # Treat as custom objective (mock ID or direct string)
+        return {
+            **state,
+            "event_title": event_id.replace("mock-", "").replace("-", " ").title(),
+            "event_category": state.get("role", "General"),
+            "days_until_event": state.get("days_until_event", 7)
+        }
+
     try:
         async with httpx.AsyncClient() as client:
             res = await client.get(
@@ -40,7 +53,8 @@ async def fetch_event_node(state: StudyPlanState) -> StudyPlanState:
                 "days_until_event": days_until,
             }
     except Exception as e:
-        return {**state, "error": str(e)}
+        # Fallback to the ID as title if lookup fails
+        return {**state, "event_title": str(event_id).title(), "days_until_event": 7}
     return state
 
 async def find_resources_node(state: StudyPlanState) -> StudyPlanState:
@@ -69,98 +83,100 @@ async def build_plan_node(state: StudyPlanState) -> StudyPlanState:
         role = state.get("role", "STUDENT")
 
         if role == "TEACHER":
-            prompt = f"""Create a detailed {days}-day lesson curriculum plan and educator schedule for a teacher preparing for class activities related to:
+            prompt = f"""You are a Master Curriculum Architect for EduConnect. 
+Generate a comprehensive {days}-day Lesson & Syllabus Roadmap.
+TARGET: {state.get('event_title', 'Curriculum Syllabus')}
+DATE: {state.get('event_date', 'TBA')}
+PLANNER: {state.get('student_name', 'Teacher')}
 
-Class Event/Objective: {state.get('event_title', 'Curriculum Syllabus')}
-Category: {state.get('event_category', 'Educational Core')}
-Days available: {days}
-Educator Name: {state.get('student_name', 'Teacher')}
+STRICT FORMATTING REQUIREMENTS:
+1. Use ### for main section headers.
+2. Use **Bold** for critical pedagogical terms.
+3. PROVIDE A FULL TABLE for the daily schedule.
+4. DO NOT BE VAGUE. Specify actual topics and classroom methods.
 
-Syllabus guidelines and resource hints:
-{resources_text if resources_text else 'Syllabus reference blueprints'}
+EXAMPLE STRUCTURE:
+### 🎯 Executive Learning Objectives
+- Define the 3 core competencies...
 
-Create a structured day-by-day lesson outline that:
-1. Covers vital curriculum topics for this module
-2. Includes specific classroom lecture goals and study topics
-3. Recommends engaging in-class activities or pop quiz checkpoints
-4. Integrates clear review segments before the final date
+### 📅 Curriculum Execution Timeline
+| Day | Core Topic | Classroom Methodology | Student Resource | Milestone |
+|---|---|---|---|---|
+| 1 | Unit A | Socratic Seminar | PDF X | Recap Quiz |
 
-Format as:
-DAY 1: [Curriculum Unit] - [Class Activities & Resources] - [Lesson Goal]
-DAY 2: [Curriculum Unit] - [Class Activities & Resources] - [Lesson Goal]
-...and so on
-
-End with educator guidance tips to maximize classroom engagement."""
+### 💡 Expert Educator Insights
+- Pro-tip for classroom management...
+"""
         elif role == "SCHOOL":
-            prompt = f"""Create a detailed {days}-day administrative planning roadmap and timeline calendar for a school operator/head preparing for:
+            prompt = f"""You are a Senior Institutional Strategist for EduConnect. 
+Generate a professional {days}-day Operational & Logistics Roadmap.
+TARGET: {state.get('event_title', 'Operational Objective')}
+DATE: {state.get('event_date', 'TBA')}
+LEAD: {state.get('student_name', 'Principal')}
 
-School Milestone/Objective: {state.get('event_title', 'Operational Audit')}
-Category: {state.get('event_category', 'Administrative Operations')}
-Days available: {days}
-School Head Name: {state.get('student_name', 'School Head')}
+STRICT FORMATTING REQUIREMENTS:
+1. Professional Institutional Tone.
+2. Detailed Markdown Tables.
+3. Focus on Stakeholders and Resource Allocation.
 
-Available resource references:
-{resources_text if resources_text else 'Standard operating procedures'}
+EXAMPLE STRUCTURE:
+### 🏛️ Institutional Strategic Vision
+- High-level KPIs...
 
-Create a day-by-day operations calendar that:
-1. Covers key logistics and coordination metrics
-2. Sets daily operational priorities and staff responsibilities
-3. Outlines parent-teacher meeting checkpoints or administrative milestones
-4. Includes contingency and review periods before the event date
+### 🗓️ Operational Roadmap
+| Day | Priority | Stakeholder Coordination | Resource Alignment | Target |
+|---|---|---|---|---|
 
-Format as:
-DAY 1: [Operations Segment] - [Staff Directives & Activities] - [Target Milestone]
-DAY 2: [Operations Segment] - [Staff Directives & Activities] - [Target Milestone]
-...and so on
-
-End with key operational advice for smooth execution."""
+### 👥 Leadership Directives
+- Tasks for HODs...
+"""
         elif role == "ADMIN":
-            prompt = f"""Create a detailed {days}-day platform deployment schedule and server health playbook for a platform admin preparing for:
+            prompt = f"""You are a Lead Platform Architect & Security Auditor for EduConnect. 
+Generate a high-precision {days}-day Systems Deployment & Rollout Playbook.
+SYSTEM GOAL: {state.get('event_title', 'Systems Milestone')}
+DATE: {state.get('event_date', 'TBA')}
+ENGINEER: {state.get('student_name', 'Admin')}
 
-System Objective: {state.get('event_title', 'Platform Safety Audit')}
-Category: {state.get('event_category', 'Systems & Policies')}
-Days available: {days}
-System Operator: {state.get('student_name', 'Platform Admin')}
+STRICT FORMATTING REQUIREMENTS:
+1. Technical, Precise Methodology.
+2. Security-First Protocols.
+3. Verification/Test Case tables.
 
-Platform security documentation and configuration hints:
-{resources_text if resources_text else 'Platform default configurations'}
+EXAMPLE STRUCTURE:
+### 🛡️ Pre-Flight Security Constraints
+- Check binary integrity...
 
-Create a day-by-day playbook that:
-1. Outlines server audit routines and safety policy updates
-2. Details systems configuration checkpoints or platform backups
-3. Suggests code-level testing parameters or integration checks
-4. Builds testing and safety margins before release
+### 🚀 Technical Rollout Timeline
+| Day | System Domain | Action Plan | Verification Log | Status |
+|---|---|---|---|---|
 
-Format as:
-DAY 1: [Platform Domain] - [Audit Steps & Config Actions] - [Systems Goal]
-DAY 2: [Platform Domain] - [Audit Steps & Config Actions] - [Systems Goal]
-...and so on
-
-End with critical security rules for platform operations."""
+### 🚨 Failover & Recovery
+- Step-by-step rollback...
+"""
         else: # STUDENT
-            prompt = f"""Create a detailed {days}-day study plan for a student preparing for:
+            prompt = f"""You are an Elite Study Performance Coach for EduConnect. 
+Generate a personalized {days}-day High-Performance Study Roadmap.
+GOAL: {state.get('event_title', 'Learning Objective')}
+STUDENT: {state.get('student_name', 'Scholar')}
+DAYS TO GO: {days}
 
-Event: {state.get('event_title', 'Competition')}
-Category: {state.get('event_category', 'General')}
-Days available: {days}
-Student: {state.get('student_name', 'Student')}
+STRICT FORMATTING REQUIREMENTS:
+1. Motivational yet Scientifically Grounded.
+2. Focus on Active Recall & Spaced Repetition.
+3. Daily Focus Blocks in a Table.
 
-Available study resources:
-{resources_text if resources_text else 'General study materials'}
+EXAMPLE STRUCTURE:
+### 🚀 Mission Success Brief
+- Why this matters...
 
-Create a day-by-day plan that:
-1. Covers key topics for this type of event
-2. Includes specific daily goals
-3. Suggests practice activities
-4. Gets progressively more focused as the event approaches
-5. Includes revision time before the event
+### 📅 Daily Mastery Blocks
+| Day | Focus Topic | Active Study Strategy | Success Marker | Intensity |
+|---|---|---|---|---|
 
-Format as:
-DAY 1: [Topic] - [Activities] - [Goal]
-DAY 2: [Topic] - [Activities] - [Goal]
-...and so on
+### 🧠 Expert Coaching Tips
+- Technique X for deep work...
+"""
 
-End with key tips for the event day."""
 
         llm = get_llm()
         response = await llm.ainvoke([HumanMessage(content=prompt)])

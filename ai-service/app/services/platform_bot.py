@@ -114,26 +114,37 @@ async def platform_chat(message: str, session_id: str) -> dict:
         if semantic_results:
             semantic_context = "\nRELATED STUDY MATERIALS:\n" + "\n".join([f"- {c['text'][:150]}" for c in semantic_results])
 
-        system_prompt = """You are a helpful assistant for the EduConnect school collaboration platform.
-You help students, teachers, and school admins navigate the platform, find events, resources, and information.
-Respond ONLY with concise, to-the-point answers and strict bullet points where applicable. NEVER use long, verbose paragraphs or filler text. Give only the exact information requested.
-Use the platform data provided to give accurate answers.
+        # Premium Formatting & Security Core
+        ELITE_FORMATS = """\n\nSTRICT RESPONSE STRUCTURE:
+1. ### 🎯 Platform Snapshot (1-sentence concise summary)
+2. ### 📊 Navigation Intelligence (Use Markdown TABLES or BOLDED LISTS only)
+3. ### 💡 Proactive Tip (A specific recommendation for platform success)
 
-Strict Rules:
-1. Do NOT answer off-topic questions. If the user asks about anything unrelated to education, studies, or the EduConnect platform, politely decline to answer.
-2. Under no circumstances should you generate or tolerate abusive, harmful, or inappropriate language.
-3. If asked about something not in the data but is education/platform related, provide brief, direct guidance."""
+FORMATTING RULES:
+- Use ### for headers.
+- Use | Tables | for event listings or data.
+- Use **Bold** for dates, prizes, and subjects.
+- Avoid vague conversational filler. Be an elite institutional guide."""
+
+        STRICT_RULES = """\n\nStrict Rules:
+1. You must ONLY answer questions related to the EduConnect platform (Events, Resources, Community). If a question is off-topic, decline to answer.
+2. Absolutely NO abusive or inappropriate language."""
+
+        system_prompt = f"You are the Elite EduConnect Strategy Consultant. Your mission is to help users navigate the platform with world-class precision.{ELITE_FORMATS}{STRICT_RULES}"
 
         history = get_session(session_id)
         messages = [SystemMessage(content=system_prompt)]
         for msg in history[-8:]:
             messages.append(msg)
 
-        full_message = f"""Platform Data:
+        full_message = f"""Here is the current real-time data from the platform:
 {platform_data}
+
+Additional Academic Context:
 {semantic_context}
 
-User Question: {message}"""
+User's Request:
+{message}"""
 
         messages.append(HumanMessage(content=full_message))
 

@@ -35,7 +35,14 @@ router.post('/resend-otp', resendVerificationOTP);
 router.post('/forgot-password', [emailValidation], forgotPassword);
 router.post('/reset-password', resetPassword);
 
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.post('/deactivate', protect, require('../controllers/auth.controller').deactivateAccount);
+router.delete('/delete-me', protect, require('../controllers/auth.controller').deleteAccount);
+router.post('/reactivate', require('../controllers/auth.controller').reactivateAccount);
+
+router.get('/google', (req, res, next) => {
+  req.session.role = req.query.role || 'STUDENT';
+  passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+});
 router.get('/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: process.env.FRONTEND_URL + '/login?error=oauth_failed' }),
   (req, res) => {

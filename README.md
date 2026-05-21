@@ -25,7 +25,7 @@
 Built with a modern microservices architecture, EduConnect features:
 - **Role-Based Access Control** (Admin, School, Teacher, Student)
 - **Real-Time Notifications** via WebSockets
-- **AI Study Assistant** powered by Google Gemini & LangGraph
+- **Premium AI Experience**: Markdown-rich chat, in-chat PDF uploads, and Expert Planning
 - **Automated Certificate Generation** with PDFKit
 - **Secure Authentication** via JWT + Google OAuth 2.0
 
@@ -50,6 +50,7 @@ Built with a modern microservices architecture, EduConnect features:
 - Cloud storage via **Cloudinary** for file management
 - Upvote system and view count tracking
 - AI-powered semantic search through vectorized resources (ChromaDB)
+- **Universal Uploads**: Students, Teachers, and Schools can now upload PDF context directly through the chat.
 
 ### 💬 Community Forum
 - Threaded discussion forum linked to events
@@ -64,10 +65,10 @@ Built with a modern microservices architecture, EduConnect features:
 ### 🤖 AI-Powered Features
 | Feature | Description | Technology |
 |---------|-------------|------------|
-| **Study Assistant** | Chat with your uploaded resources using RAG | LangChain + ChromaDB |
-| **Platform Bot** | Get instant answers about platform features | Gemini + LangChain |
-| **Study Planner** | AI-generated personalized study plans for events | LangGraph Agents |
-| **Smart Recommendations** | Get resource suggestions based on your interests | Sentence Transformers |
+| **Study Assistant** | Markdown-rich chat with 📎 PDF upload & RAG | Gemini 1.5 Pro + ChromaDB |
+| **Platform Bot** | Professional navigator with institutional insights | Gemini + LangChain |
+| **Study Planner** | Expert daily roadmaps with Markdown tables & Print | LangGraph Agents |
+| **Smart Recommendations** | Intelligent resource suggestions for all roles | Sentence Transformers |
 
 ### 🔐 Authentication & Security
 - **JWT-based authentication** with access & refresh tokens
@@ -366,7 +367,7 @@ The AI service will be running on **http://localhost:8001**
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/v1/resources` | List all resources |
-| `POST` | `/api/v1/resources` | Upload a resource (School/Teacher) |
+| `POST` | `/api/v1/resources` | Upload a resource (All Roles authorized) |
 | `GET` | `/api/v1/resources/:id` | Get resource details |
 
 ### AI Service Endpoints
