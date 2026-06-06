@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/common/Layout';
 import Loader from '../components/common/Loader';
@@ -16,9 +17,26 @@ const ResourceDetail = () => {
   const [upvoting, setUpvoting] = useState(false);
   const [msg, setMsg] = useState('');
 
+  const viewed = useRef(false);
+
   useEffect(() => {
-    resourceService.getById(id).then(res => setResource(res.data)).catch(() => navigate('/resources')).finally(() => setLoading(false));
+    let mounted = true;
+    resourceService.getById(id).then(res => {
+      if (mounted) setResource(res.data);
+    }).catch(() => navigate('/resources')).finally(() => {
+      if (mounted) setLoading(false);
+    });
+
+    // Increment view count only once per mount
+    if (!viewed.current) {
+      resourceService.incrementView(id).catch(console.error);
+      viewed.current = true;
+    }
+
+    return () => { mounted = false; };
   }, [id]);
+
+
 
   const handleUpvote = async () => {
     setUpvoting(true);
@@ -62,12 +80,13 @@ const ResourceDetail = () => {
                 Open / Download ↗
               </a>
             )}
-            {user?.role==='STUDENT' && (
+            {user && (
               <button onClick={handleUpvote} disabled={upvoting}
                 className='px-4 py-2 bg-dark-800 border border-dark-700 text-sm font-medium rounded-xl hover:bg-dark-700 text-dark-200'>
                 👍 Upvote ({resource.upvotes})
               </button>
             )}
+
             {(user?.id===resource.uploadedBy||user?.role==='ADMIN') && (
               <button onClick={handleDelete} className='px-4 py-2 bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-medium rounded-xl hover:bg-red-500/20'>Delete</button>
             )}

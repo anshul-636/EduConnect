@@ -9,6 +9,8 @@ const resourceService = {
   },
   delete: async (id) => { const res = await api.delete('/resources/' + id); return res.data; },
   upvote: async (id) => { const res = await api.post('/resources/' + id + '/upvote'); return res.data; },
+  incrementView: async (id) => { const res = await api.post('/resources/' + id + '/view'); return res.data; },
 };
+
 
 export default resourceService;

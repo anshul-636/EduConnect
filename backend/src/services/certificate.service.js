@@ -101,21 +101,20 @@ class CertificateService {
     // Ensure certificates are generated first
     await this.generate(eventId, userId);
 
+    const sendEmail = require('../utils/email');
+    const { generateCertificateBuffer } = require('../utils/generateCertificate');
+
+    // Fetch the certificates with all necessary student and event data
     const certificates = await prisma.certificate.findMany({
       where: { eventId },
       include: {
         student: { select: { id: true, name: true, email: true } },
-        event: { select: { id: true, title: true, category: true, eventDate: true, prizePool: true, firstPrize: true, secondPrize: true, thirdPrize: true } },
+        event: { select: { id: true, title: true, category: true, eventDate: true, firstPrize: true, secondPrize: true, thirdPrize: true } },
       },
     });
 
-    const results = [];
-    const sendEmail = require('../utils/email');
-    const { generateCertificateBuffer } = require('../utils/generateCertificate');
-
-    for (const cert of certificates) {
-      if (!cert.student?.email) continue;
-      
+    const promises = certificates.map(async (cert) => {
+      if (!cert.student?.email) return { email: 'unknown', success: false, error: 'No email address' };
       try {
         const pdfBuffer = await generateCertificateBuffer({
           studentName: cert.student.name,
@@ -128,66 +127,41 @@ class CertificateService {
 
         const isWinner = cert.type === 'WINNER';
         const isRunner = cert.type === 'RUNNER_UP';
-        
-        let honorsText = 'Participation';
-        let prizeDetails = '';
-
-        if (isWinner) {
-          honorsText = 'Winner (1st Place) 🥇';
-          if (cert.event.firstPrize) prizeDetails = `<p style="font-size: 15px; color: #fbbf24; font-weight: bold; margin-top: 10px;">🏆 Prize Awarded: ${cert.event.firstPrize}</p>`;
-        } else if (isRunner) {
-          honorsText = 'Runner Up (2nd Place) 🥈';
-          if (cert.event.secondPrize) prizeDetails = `<p style="font-size: 15px; color: #94a3b8; font-weight: bold; margin-top: 10px;">🏆 Prize Awarded: ${cert.event.secondPrize}</p>`;
-        }
+        let honorsText = isWinner ? 'Winner (1st Place) 🥇' : isRunner ? 'Runner Up (2nd Place) 🥈' : 'Participation';
+        let prizeDetails = (isWinner && cert.event.firstPrize) ? `<p style="font-size: 15px; color: #fbbf24; font-weight: bold; margin-top: 10px;">🏆 Prize Awarded: ${cert.event.firstPrize}</p>` : 
+                           (isRunner && cert.event.secondPrize) ? `<p style="font-size: 15px; color: #94a3b8; font-weight: bold; margin-top: 10px;">🏆 Prize Awarded: ${cert.event.secondPrize}</p>` : '';
 
         const html = `
-          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 40px; border-radius: 16px; max-width: 600px; margin: 0 auto; border: 1px solid #1e293b;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h1 style="color: #c9a84c; font-size: 28px; margin: 0; letter-spacing: 4px; text-transform: uppercase;">EduConnect</h1>
-              <p style="color: #64748b; font-size: 12px; margin-top: 5px;">HONORING EXCELLENCE IN EDUCATION</p>
-            </div>
-            
-            <h2 style="color: #ffffff; font-size: 20px; font-weight: 600; text-align: center;">Congratulations, ${cert.student.name}!</h2>
-            
-            <p style="font-size: 15px; line-height: 1.6; color: #94a3b8; text-align: center; margin: 20px 0 30px 0;">
-              We are absolutely thrilled to present you with your official digital certificate for successfully participating in <strong>${cert.event.title}</strong> organized by <strong>${school.name}</strong>.
-            </p>
-
-            <div style="background-color: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; margin-bottom: 30px; text-align: center;">
-              <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin: 0;">Achievement level</p>
-              <p style="font-size: 22px; font-weight: bold; color: #ffffff; margin: 5px 0 0 0;">${honorsText}</p>
+          <div style="font-family: sans-serif; background-color: #0f172a; color: #f1f5f9; padding: 40px; border-radius: 16px; max-width: 600px; margin: 0 auto; border: 1px solid #1e293b;">
+            <h1 style="color: #c9a84c; text-align: center;">EduConnect</h1>
+            <h2 style="text-align: center;">Congratulations, ${cert.student.name}!</h2>
+            <p style="text-align: center;">Official certificate for <strong>${cert.event.title}</strong> by <strong>${school.name}</strong>.</p>
+            <div style="background-color: #1e293b; border-radius: 12px; padding: 20px; text-align: center;">
+              <p style="font-size: 22px; font-weight: bold;">${honorsText}</p>
               ${prizeDetails}
             </div>
-
-            <p style="font-size: 13px; line-height: 1.6; color: #64748b; text-align: center; margin-bottom: 25px;">
-              Your official, high-resolution certificate is attached to this email as a PDF. You can also view it inside your EduConnect dashboard under "My Certificates" at any time.
-            </p>
-
-            <div style="text-align: center; border-top: 1px solid #1e293b; padding-top: 25px;">
-              <p style="font-size: 12px; color: #475569; margin: 0;">&copy; ${new Date().getFullYear()} EduConnect. All rights reserved.</p>
-            </div>
+            <p style="font-size: 12px; color: #64748b; text-align: center; margin-top: 20px;">PDF Attachment included. View in Dashboard > My Certificates.</p>
           </div>
         `;
 
         await sendEmail({
           email: cert.student.email,
-          subject: `🏆 Certificate Earned: ${cert.event.title} (${cert.type})`,
+          subject: `🏆 Certificate Earned: ${cert.event.title} (${cert.type === 'WINNER' ? '🥇' : cert.type === 'RUNNER_UP' ? '🥈' : '🏅'})`,
           html,
-          attachments: [
-            {
-              filename: `${cert.student.name.replace(/\\s+/g, '_')}_Certificate.pdf`,
-              content: pdfBuffer,
-            }
-          ]
+          attachments: [{
+            filename: `${cert.student.name.split(' ')[0]}_Certificate.pdf`,
+            content: pdfBuffer,
+          }]
         });
 
-        results.push({ email: cert.student.email, success: true });
+        return { email: cert.student.email, success: true };
       } catch (err) {
-        console.error('Failed to send email to:', cert.student.email, err);
-        results.push({ email: cert.student.email, success: false, error: err.message });
+        console.error('Failed to send email to:', cert.student?.email, err);
+        return { email: cert.student?.email, success: false, error: err.message };
       }
-    }
+    });
 
+    const results = await Promise.all(promises);
     return results;
   }
 }

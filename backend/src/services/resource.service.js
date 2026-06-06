@@ -1,11 +1,15 @@
 const prisma = require('../utils/prisma');
 const { cloudinary } = require('../utils/cloudinary');
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
 class ResourceService {
   async create(data, file, userId) {
     // Generate a URL pointing to the local backend /uploads endpoint
     const fileUrl = file ? `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/${file.filename}` : (data.fileUrl || null);
-    return prisma.resource.create({
+
+    const resource = await prisma.resource.create({
       data: {
         title: data.title,
         description: data.description || null,
@@ -18,6 +22,29 @@ class ResourceService {
       },
       include: { uploader: { select: { id: true, name: true, role: true } } },
     });
+
+    // Auto-embed PDF into ChromaDB for AI RAG search
+    if (file && (data.type === 'PDF' || file.originalname?.endsWith('.pdf'))) {
+      try {
+        const filePath = path.join(__dirname, '../../uploads', file.filename);
+        const FormData = require('form-data');
+        const form = new FormData();
+        form.append('file', fs.createReadStream(filePath), { filename: file.originalname || file.filename });
+        form.append('resource_id', resource.id);
+        form.append('title', resource.title);
+
+        const aiUrl = process.env.AI_SERVICE_URL || 'http://localhost:8001';
+        await axios.post(`${aiUrl}/api/v1/embed/pdf`, form, {
+          headers: form.getHeaders(),
+          timeout: 30000,
+        });
+        console.log(`✅ Auto-embedded resource "${resource.title}" into ChromaDB`);
+      } catch (e) {
+        console.error(`⚠️ Auto-embed failed for "${resource.title}":`, e.message);
+      }
+    }
+
+    return resource;
   }
 
   async getAll(filters = {}) {
@@ -45,9 +72,15 @@ class ResourceService {
       },
     });
     if (!resource) { const err = new Error('Resource not found.'); err.statusCode = 404; throw err; }
-    await prisma.resource.update({ where: { id }, data: { viewCount: { increment: 1 } } });
     return resource;
   }
+
+  async incrementViewCount(id) {
+    const resource = await prisma.resource.findUnique({ where: { id } });
+    if (!resource) { const err = new Error('Resource not found.'); err.statusCode = 404; throw err; }
+    return prisma.resource.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+  }
+
 
   async delete(id, userId) {
     const resource = await prisma.resource.findUnique({ where: { id } });
@@ -74,8 +107,16 @@ class ResourceService {
   async upvote(id) {
     const resource = await prisma.resource.findUnique({ where: { id } });
     if (!resource) { const err = new Error('Resource not found.'); err.statusCode = 404; throw err; }
-    return prisma.resource.update({ where: { id }, data: { upvotes: { increment: 1 } } });
+    return prisma.resource.update({ 
+      where: { id }, 
+      data: { upvotes: { increment: 1 } },
+      include: {
+        uploader: { select: { id: true, name: true, role: true } },
+        school: { select: { id: true, name: true } },
+      },
+    });
   }
+
 }
 
 module.exports = new ResourceService();

@@ -1,5 +1,5 @@
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const CloudinaryStorage = require('multer-storage-cloudinary').CloudinaryStorage || require('multer-storage-cloudinary');
 const multer = require('multer');
 
 cloudinary.config({
@@ -14,17 +14,19 @@ const storage = new CloudinaryStorage({
     const ext = file.originalname.split('.').pop();
     const isPdf = file.mimetype === 'application/pdf';
     
-    // For raw files (like PDF), we must embed the extension in the public_id itself
-    // to ensure it downloads with the correct file type.
+    // Use 'image' resource type for PDFs so Cloudinary serves them correctly for browser viewing.
+    // For other files, use 'auto'.
+    const resourceType = isPdf ? 'image' : 'auto';
     const baseName = file.originalname.split('.')[0].replace(/[^a-zA-Z0-9]/g, '');
-    const publicId = `${baseName}-${Date.now()}${isPdf ? '.pdf' : ''}`;
+    const publicId = `${baseName}-${Date.now()}`;
 
     return {
       folder: 'educonnect/resources',
       allowed_formats: ['pdf', 'jpg', 'jpeg', 'png', 'mp4'],
-      resource_type: isPdf ? 'raw' : 'auto',
+      resource_type: resourceType,
       public_id: publicId,
     };
+
   },
 });
 

@@ -25,7 +25,8 @@
 Built with a modern microservices architecture, EduConnect features:
 - **Role-Based Access Control** (Admin, School, Teacher, Student)
 - **Real-Time Notifications** via WebSockets
-- **AI Study Assistant** powered by Google Gemini & LangGraph
+- **Account Life-Cycle Management**: Temporary deactivation, permanent deletion, and instant re-activation
+- **Premium AI Experience**: Markdown-rich chat, in-chat PDF uploads, and Expert Planning (Elite Strategy Consultant Persona)
 - **Automated Certificate Generation** with PDFKit
 - **Secure Authentication** via JWT + Google OAuth 2.0
 
@@ -50,6 +51,7 @@ Built with a modern microservices architecture, EduConnect features:
 - Cloud storage via **Cloudinary** for file management
 - Upvote system and view count tracking
 - AI-powered semantic search through vectorized resources (ChromaDB)
+- **Universal Uploads**: Students, Teachers, and Schools can now upload PDF context directly through the chat.
 
 ### 💬 Community Forum
 - Threaded discussion forum linked to events
@@ -59,19 +61,21 @@ Built with a modern microservices architecture, EduConnect features:
 ### 🏆 Leaderboard & Certificates
 - Real-time student rankings by score across events
 - School-level and event-level leaderboards
-- **Automated PDF certificate generation** (Participation, Winner, Runner-Up)
+- **High-Performance Auto-Dispatch**: Parallel concurrent processing for generating and mailing PDF certificates (Participation, Winner, Runner-Up) in one click
 
 ### 🤖 AI-Powered Features
 | Feature | Description | Technology |
 |---------|-------------|------------|
-| **Study Assistant** | Chat with your uploaded resources using RAG | LangChain + ChromaDB |
-| **Platform Bot** | Get instant answers about platform features | Gemini + LangChain |
-| **Study Planner** | AI-generated personalized study plans for events | LangGraph Agents |
-| **Smart Recommendations** | Get resource suggestions based on your interests | Sentence Transformers |
+| **Study Assistant** | Markdown-rich chat with 📎 PDF upload & RAG | Gemini 1.5 Pro + ChromaDB |
+| **Platform Bot** | Professional navigator with institutional insights | Gemini + LangChain |
+| **Study Planner** | Expert daily roadmaps with Markdown tables & Print | LangGraph Agents |
+| **Smart Recommendations** | Intelligent resource suggestions for all roles | Sentence Transformers |
 
 ### 🔐 Authentication & Security
 - **JWT-based authentication** with access & refresh tokens
-- **Google OAuth 2.0** for seamless sign-in
+- **Google OAuth 2.0** with secure role persistence (School, Admin, Teacher, or Student)
+- **Account Settings**: Premium dashboard for deactivation (Soft Disable) and irreversible account deletion (Data Purge)
+- **Instant Re-activation**: One-click profile restoration for recently disabled accounts
 - **Email verification** with OTP
 - **Password reset** flow via email
 - Role-based route protection on both frontend and backend
@@ -143,7 +147,7 @@ Built with a modern microservices architecture, EduConnect features:
 │                        │                     │               │
 │                ┌───────▼───────┐     ┌───────▼──────┐        │
 │                │  PostgreSQL   │     │   ChromaDB   │        │
-│                │  (Prisma ORM) │     │  (Vectors)   │        │
+│                │  (Secure Purge) │     │  (Vectors)   │        │
 │                └───────────────┘     └──────────────┘        │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -363,8 +367,11 @@ The AI service will be running on **http://localhost:8001**
 | `POST` | `/api/v1/auth/verify-email` | Verify email with OTP |
 | `POST` | `/api/v1/auth/forgot-password` | Request password reset |
 | `POST` | `/api/v1/auth/reset-password` | Reset password with OTP |
-| `GET` | `/api/v1/auth/google` | Initiate Google OAuth |
+| `GET` | `/api/v1/auth/google` | Initiate Google OAuth (with `role` param) |
 | `GET` | `/api/v1/auth/google/callback` | Google OAuth callback |
+| `POST` | `/api/v1/auth/deactivate` | Temporarily disable account |
+| `DELETE` | `/api/v1/auth/delete-me` | Permanently delete account & data |
+| `POST` | `/api/v1/auth/reactivate` | Securely restore a disabled account |
 
 ### Event Endpoints
 
@@ -380,7 +387,7 @@ The AI service will be running on **http://localhost:8001**
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/v1/resources` | List all resources |
-| `POST` | `/api/v1/resources` | Upload a resource (School/Teacher) |
+| `POST` | `/api/v1/resources` | Upload a resource (All Roles authorized) |
 | `GET` | `/api/v1/resources/:id` | Get resource details |
 
 ### AI Service Endpoints

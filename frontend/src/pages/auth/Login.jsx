@@ -12,6 +12,7 @@ const Login = () => {
   const [form, setForm] = useState({ email:'', password:'' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showReactivate, setShowReactivate] = useState(false);
 
   useEffect(() => {
     if (params.get('error') === 'oauth_failed') setError('Google sign-in failed. Please try again.');
@@ -39,11 +40,32 @@ const Login = () => {
         }});
         return;
       }
+      if (err.response?.data?.accountDeactivated) {
+        setShowReactivate(true);
+        return;
+      }
       setError(err.response?.data?.message || 'Login failed. Try again.');
     } finally { setLoading(false); }
   };
 
-  const handleGoogle = () => { window.location.href = 'http://localhost:3000/api/v1/auth/google'; };
+  const handleReactivate = async () => {
+    setLoading(true);
+    try {
+      await authService.reactivateAccount(form);
+      setShowReactivate(false);
+      // Automatically log them in after reactivation
+      const res = await authService.login(form);
+      const { user, accessToken, refreshToken } = res.data;
+      setAuth(user, accessToken, refreshToken);
+      navigate(DASH[user.role] || '/dashboard/student');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Reactivation failed.');
+    } finally { setLoading(false); }
+  };
+
+  const handleGoogle = () => { 
+    window.location.href = 'http://localhost:3000/api/v1/auth/google?role=STUDENT'; 
+  };
 
   return (
     <div className='min-h-screen bg-dark-950 flex'>
@@ -94,6 +116,36 @@ const Login = () => {
           <p className='text-center text-sm text-dark-500 mt-6'>Don not have an account?{' '}<Link to='/register' className='text-brand-400 font-medium hover:text-brand-300'>Create one</Link></p>
         </div>
       </div>
+      {/* Reactivation Modal */}
+      {showReactivate && (
+        <div className='fixed inset-0 bg-dark-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4'>
+          <div className='card max-w-md w-full p-8 animate-scale-in border-brand-500/30'>
+            <div className='text-4xl mb-4 text-center'>👋</div>
+            <h3 className='text-2xl font-display font-bold text-dark-50 text-center mb-2'>
+              Welcome Back!
+            </h3>
+            <p className='text-dark-400 text-center mb-8'>
+              Your account is currently disabled. Would you like to re-activate it and pick up where you left off?
+            </p>
+            <div className='grid grid-cols-2 gap-4'>
+              <button 
+                disabled={loading}
+                onClick={() => setShowReactivate(false)}
+                className='btn-secondary py-3'
+              >
+                Not Now
+              </button>
+              <button 
+                disabled={loading}
+                onClick={handleReactivate}
+                className='btn-primary py-3'
+              >
+                {loading ? 'Working...' : 'Yes, Re-activate'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

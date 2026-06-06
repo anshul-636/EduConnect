@@ -12,7 +12,7 @@ const create = async (req, res) => {
 
 const getAll = async (req, res) => {
   try {
-    const events = await eventService.getAll(req.query);
+    const events = await eventService.getAll(req.query, req.user);
     res.json({ success: true, data: events });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };

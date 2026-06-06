@@ -155,7 +155,7 @@ model Registration {
   eventId   String
   event     Event  @relation(fields: [eventId], references: [id])
   studentId String
-  student   User   @relation(fields: [studentId], references: [id])
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, studentId]) // student can register once per event
 }
@@ -178,7 +178,7 @@ model Resource {
   schoolId    String?
   school      School?  @relation(fields: [schoolId], references: [id])
   uploadedBy  String
-  uploader    User     @relation(fields: [uploadedBy], references: [id])
+  uploader    User     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
 
   // Relations
   chatSessions ChatSession[]
@@ -193,7 +193,7 @@ model Leaderboard {
 
   // FKs
   studentId String
-  student   User   @relation(fields: [studentId], references: [id])
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   schoolId  String
   school    School @relation(fields: [schoolId], references: [id])
   eventId   String
@@ -208,7 +208,7 @@ model Certificate {
 
   // FKs
   studentId String
-  student   User   @relation(fields: [studentId], references: [id])
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   eventId   String
   event     Event  @relation(fields: [eventId], references: [id])
 }
@@ -223,7 +223,7 @@ model ForumPost {
   eventId   String?
   event     Event?    @relation(fields: [eventId], references: [id])
   authorId  String
-  author    User      @relation(fields: [authorId], references: [id])
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   parentId  String?
   parent    ForumPost? @relation("Replies", fields: [parentId], references: [id])
   replies   ForumPost[] @relation("Replies")
@@ -240,7 +240,7 @@ model ChatSession {
 
   // FKs
   studentId  String
-  student    User      @relation(fields: [studentId], references: [id])
+  student    User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
   resourceId String?
   resource   Resource? @relation(fields: [resourceId], references: [id])
 }
@@ -253,7 +253,7 @@ model StudyPlan {
 
   // FKs
   studentId String
-  student   User   @relation(fields: [studentId], references: [id])
+  student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   eventId   String
   event     Event  @relation(fields: [eventId], references: [id])
 }

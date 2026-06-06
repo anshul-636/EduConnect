@@ -38,4 +38,12 @@ const upvote = async (req, res) => {
   } catch (err) { res.status(err.statusCode || 500).json({ success: false, message: err.message }); }
 };
 
-module.exports = { create, getAll, getById, remove, upvote };
+const incrementView = async (req, res) => {
+  try {
+    const resource = await resourceService.incrementViewCount(req.params.id);
+    res.json({ success: true, data: resource });
+  } catch (err) { res.status(err.statusCode || 500).json({ success: false, message: err.message }); }
+};
+
+module.exports = { create, getAll, getById, remove, upvote, incrementView };
+
