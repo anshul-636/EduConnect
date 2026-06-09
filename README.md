@@ -39,11 +39,13 @@ Built with a modern microservices architecture, EduConnect features:
 - School administrators can manage members, events, and resources
 - Campus directory with search and detailed school profiles
 
-### 📅 Event Management
-- Create and manage academic events (Debates, Quizzes, Science Fairs, Sports, Arts)
-- Team-based registration with configurable team sizes
-- Event leaderboards, results tracking, and prize pool management
-- Answer key support with automated scoring
+### 📅 Event Management (Institutional Control)
+- **Advanced Lifecycle**: Manage event visibility through `DRAFT`, `PUBLISHED`, `OPEN`, `ONGOING`, and `COMPLETED` states
+- **Privacy Enforcement**: `DRAFT` events are strictly invisible to students, allowing schools to prepare in private
+- **Coming Soon Mode**: Use `PUBLISHED` state to list events as "Upcoming" without opening registrations
+- **Quick Status Toggle**: Institutional-grade management panel for instant state transitions (e.g., Revert to Draft, Publish)
+- **Team-based registration**: Configurable team sizes with member validation
+- **Automated workflows**: Integrated rank calculation, leaderboard sync, and certificate dispatch
 
 ### 📚 Resource Library
 - Upload and share educational resources (PDFs, Videos, Links, Notes)
@@ -365,8 +367,9 @@ The AI service will be running on **http://localhost:8001**
 |--------|----------|-------------|
 | `GET` | `/api/v1/events` | List all events |
 | `POST` | `/api/v1/events` | Create a new event (School only) |
-| `GET` | `/api/v1/events/:id` | Get event details |
-| `POST` | `/api/v1/events/:id/register` | Register for an event |
+| `GET` | `/api/v1/events/:id` | Get event details (includes `adminId` for owner verification) |
+| `POST` | `/api/v1/events/:id/register` | Register for an event (Only allowed if status is `OPEN`) |
+| `PUT` | `/api/v1/events/:id` | Update event details or status (e.g., Draft → Open) |
 
 ### Resource Endpoints
 

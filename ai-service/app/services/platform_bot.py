@@ -1,121 +1,222 @@
+"""
+platform_bot.py  —  Fixed version.
+
+Errors corrected:
+ 1. Return key changed back to "reply" (matches router + frontend)
+ 2. Function signature restored to (message, session_id) — matches router call
+ 3. search_similar is now actually used (like original) — import no longer dead
+ 4. session_store imported safely with try/except fallback to in-memory
+ 5. clear_session kept synchronous so router can call it without await
+ 6. Loop variables renamed (ev, res_item, lead_item) — no more 'e' conflict
+ 7. _store created inside try/except — bad import no longer crashes startup
+"""
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from app.core.config import settings
-from app.services.ingestion import search_similar
-import httpx
+from app.services.ingestion import search_similar   # still used below ✓
 from typing import List
+import httpx
 
+# ── Session store — DB-backed with safe in-memory fallback ────────────────────
+try:
+    from app.services.session_store import SessionStore
+    _store = SessionStore()
+    _USE_DB_SESSIONS = True
+except (ImportError, Exception):
+    # session_store.py not deployed yet — fall back to in-memory
+    _store = None
+    _USE_DB_SESSIONS = False
+
+# Fallback in-memory store (original behaviour)
+_sessions: dict = {}
+
+
+# ── LLM factory ───────────────────────────────────────────────────────────────
 def get_llm():
     if settings.GROQ_API_KEY:
-        # pyrefly: ignore [missing-import]
-        from langchain_groq import ChatGroq
-        return ChatGroq(
-            model="llama-3.3-70b-versatile",
-            groq_api_key=settings.GROQ_API_KEY,
-            temperature=0.5,
-        )
+        try:
+            import importlib
+            _mod = importlib.import_module("langchain_groq")
+            ChatGroq = getattr(_mod, "ChatGroq")
+            return ChatGroq(
+                model="llama-3.3-70b-versatile",
+                groq_api_key=settings.GROQ_API_KEY,
+                temperature=0.5,
+            )
+        except ImportError:
+            pass
     return ChatGoogleGenerativeAI(
         model="gemini-2.0-flash",
         google_api_key=settings.GEMINI_API_KEY,
         temperature=0.5,
     )
 
-_sessions = {}
 
-def get_session(session_id: str) -> List:
+# ── Session helpers ───────────────────────────────────────────────────────────
+async def _load_session(session_id: str) -> List:
+    """Load history from DB if available, else from in-memory dict."""
+    if _USE_DB_SESSIONS and _store:
+        try:
+            return await _store.load(session_id, bot_type="PLATFORM")
+        except Exception:
+            pass
+    # Fallback
     if session_id not in _sessions:
         _sessions[session_id] = []
     return _sessions[session_id]
 
+
+async def _save_session(session_id: str, history: List) -> None:
+    """Persist history to DB if available, else keep in-memory."""
+    if _USE_DB_SESSIONS and _store:
+        try:
+            await _store.save(session_id, history)
+            return
+        except Exception:
+            pass
+    # Fallback
+    _sessions[session_id] = history
+
+
+# FIX 5 — clear_session stays synchronous so router can call without await
+def clear_session(session_id: str) -> None:
+    """Clear session (sync — compatible with existing router)."""
+    _sessions.pop(session_id, None)
+    if _USE_DB_SESSIONS and _store:
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                loop.create_task(_store.clear(session_id))
+            else:
+                loop.run_until_complete(_store.clear(session_id))
+        except Exception:
+            pass
+
+
+# ── Live platform data ─────────────────────────────────────────────────────────
 async def fetch_platform_data(query: str) -> str:
     try:
         clean_query = query.strip()
-        
+
         async with httpx.AsyncClient() as client:
-            # 1. Fetch Events
-            events_res = await client.get(f"{settings.NODE_BACKEND_URL}/api/v1/events?search={clean_query}", timeout=5)
-            events = []
+            # Events
+            events_res = await client.get(
+                f"{settings.NODE_BACKEND_URL}/api/v1/events?search={clean_query}",
+                timeout=5,
+            )
+            events: list = []
             if events_res.status_code == 200:
-                events = events_res.json().get("data", [])
-            
-            # If search returns no events, fallback to fetching all events
+                payload = events_res.json().get("data", [])
+                # Handle both paginated {items:[]} and legacy [] shapes
+                events = payload if isinstance(payload, list) else payload.get("items", [])
+
             if not events:
-                all_events_res = await client.get(f"{settings.NODE_BACKEND_URL}/api/v1/events", timeout=5)
-                if all_events_res.status_code == 200:
-                    events = all_events_res.json().get("data", [])
-            
-            # 2. Fetch Resources
-            resources_res = await client.get(f"{settings.NODE_BACKEND_URL}/api/v1/resources?search={clean_query}", timeout=5)
-            resources = []
-            if resources_res.status_code == 200:
-                resources = resources_res.json().get("data", [])
-            
-            # If search returns no resources, fallback to fetching all resources
+                fallback = await client.get(
+                    f"{settings.NODE_BACKEND_URL}/api/v1/events", timeout=5
+                )
+                if fallback.status_code == 200:
+                    payload = fallback.json().get("data", [])
+                    events = payload if isinstance(payload, list) else payload.get("items", [])
+
+            # Resources
+            res_response = await client.get(
+                f"{settings.NODE_BACKEND_URL}/api/v1/resources?search={clean_query}",
+                timeout=5,
+            )
+            resources: list = []
+            if res_response.status_code == 200:
+                payload = res_response.json().get("data", [])
+                resources = payload if isinstance(payload, list) else payload.get("items", [])
+
             if not resources:
-                all_resources_res = await client.get(f"{settings.NODE_BACKEND_URL}/api/v1/resources", timeout=5)
-                if all_resources_res.status_code == 200:
-                    resources = all_resources_res.json().get("data", [])
-            
-            # 3. Fetch Leaderboard
-            leaderboard_res = await client.get(f"{settings.NODE_BACKEND_URL}/api/v1/leaderboard", timeout=5)
-            leaders = []
-            if leaderboard_res.status_code == 200:
-                leaders = leaderboard_res.json().get("data", [])
+                fallback = await client.get(
+                    f"{settings.NODE_BACKEND_URL}/api/v1/resources", timeout=5
+                )
+                if fallback.status_code == 200:
+                    payload = fallback.json().get("data", [])
+                    resources = payload if isinstance(payload, list) else payload.get("items", [])
 
-        data_parts = []
+            # Leaderboard
+            lb_response = await client.get(
+                f"{settings.NODE_BACKEND_URL}/api/v1/leaderboard", timeout=5
+            )
+            leaders: list = []
+            if lb_response.status_code == 200:
+                leaders = lb_response.json().get("data", [])
 
-        # Format Events with high details
+        data_parts: List[str] = []
+
+        # FIX 6 — renamed loop vars to avoid shadowing 'e' in except block
         if events:
             event_strings = []
-            for e in events[:15]:
-                deadline = e.get('regDeadline')
-                deadline_str = deadline[:10] if deadline else 'None'
+            for ev in events[:15]:
+                deadline = ev.get("regDeadline")
                 event_strings.append(
-                    f"- **{e['title']}** (Category: {e.get('category', 'OTHER')})\n"
-                    f"  * Status: {e['status']}\n"
-                    f"  * Date: {e['eventDate'][:10]}\n"
-                    f"  * Deadline: {deadline_str}\n"
-                    f"  * Target Class: {e.get('targetClass', 'All')}\n"
-                    f"  * Location: {e.get('location', 'TBA')}\n"
-                    f"  * Prize Pool: {e.get('prizePool', 'None')}\n"
-                    f"  * Description: {e.get('description', '')}"
+                    f"- **{ev['title']}** (Category: {ev.get('category', 'OTHER')})\n"
+                    f"  * Status: {ev['status']}\n"
+                    f"  * Date: {ev['eventDate'][:10]}\n"
+                    f"  * Deadline: {deadline[:10] if deadline else 'None'}\n"
+                    f"  * Target Class: {ev.get('targetClass', 'All')}\n"
+                    f"  * Location: {ev.get('location', 'TBA')}\n"
+                    f"  * Prize Pool: {ev.get('prizePool', 'None')}\n"
+                    f"  * Description: {ev.get('description', '')}"
                 )
             data_parts.append("AVAILABLE EVENTS CALENDAR:\n" + "\n".join(event_strings))
 
-        # Format Resources with high details
         if resources:
             res_strings = []
-            for r in resources[:15]:
+            for res_item in resources[:15]:         # FIX 6 — was 'r'
                 res_strings.append(
-                    f"- **{r['title']}** ({r.get('type', 'PDF')})\n"
-                    f"  * Subject: {r.get('subject') or 'General'}\n"
-                    f"  * Topic: {r.get('topic') or 'General'}\n"
-                    f"  * Difficulty: {r.get('difficulty', 'BEGINNER')}\n"
-                    f"  * Description: {r.get('description') or 'No description'}\n"
-                    f"  * File URL: {r.get('fileUrl') or 'No file'}"
+                    f"- **{res_item['title']}** ({res_item.get('type', 'PDF')})\n"
+                    f"  * Subject: {res_item.get('subject') or 'General'}\n"
+                    f"  * Topic: {res_item.get('topic') or 'General'}\n"
+                    f"  * Difficulty: {res_item.get('difficulty', 'BEGINNER')}\n"
+                    f"  * Description: {res_item.get('description') or 'No description'}\n"
+                    f"  * File URL: {res_item.get('fileUrl') or 'No file'}"
                 )
             data_parts.append("AVAILABLE ACADEMIC RESOURCES:\n" + "\n".join(res_strings))
 
-        # Format Leaderboard
         if leaders:
-            lead_list = "\n".join([f"- Rank {i+1}: {l['student']['name']} ({l['school']['name']}) - Score: {l['score']}" for i, l in enumerate(leaders[:5])])
-            data_parts.append(f"LEADERBOARD TOP RANKINGS:\n{lead_list}")
+            lead_lines = []
+            for lead_item in leaders[:5]:           # FIX 6 — was 'l'
+                name   = lead_item.get("student", {}).get("name", "Unknown")
+                school = lead_item.get("school",  {}).get("name", "")
+                score  = lead_item.get("score", 0)
+                rank   = lead_item.get("rank", "?")
+                lead_lines.append(f"- #{rank} {name} ({school}) — Score: {score}")
+            data_parts.append("LEADERBOARD TOP RANKINGS:\n" + "\n".join(lead_lines))
 
         return "\n\n".join(data_parts) if data_parts else "No active platform data available."
-    except Exception as e:
-        return f"Could not fetch platform data: {str(e)}"
 
+    # FIX 6 — exception var 'exc' no longer conflicts with loop var 'e'
+    except Exception as exc:
+        return f"Could not fetch platform data: {str(exc)}"
+
+
+# ── Main chat function ─────────────────────────────────────────────────────────
+# FIX 1 + FIX 2 — signature and return key restored to match router exactly
 async def platform_chat(message: str, session_id: str) -> dict:
+    """
+    Called by router as:  platform_chat(req.message, req.session_id)
+    Returns:              {"reply": ..., "session_id": ...}
+    """
     try:
+        # Live platform data
         platform_data = await fetch_platform_data(message)
 
+        # FIX 3 — search_similar is now actually used (wasn't in the broken version)
         semantic_results = search_similar(message, top_k=2)
         semantic_context = ""
         if semantic_results:
-            semantic_context = "\nRELATED STUDY MATERIALS:\n" + "\n".join([f"- {c['text'][:150]}" for c in semantic_results])
+            semantic_context = "\nRELATED STUDY MATERIALS:\n" + "\n".join(
+                [f"- {c['text'][:150]}" for c in semantic_results]
+            )
 
-        # Premium Formatting & Security Core
-        ELITE_FORMATS = """\n\nSTRICT RESPONSE STRUCTURE:
+        ELITE_FORMATS = """
+
+STRICT RESPONSE STRUCTURE:
 1. ### 🎯 Platform Snapshot (1-sentence concise summary)
 2. ### 📊 Navigation Intelligence (Use Markdown TABLES or BOLDED LISTS only)
 3. ### 💡 Proactive Tip (A specific recommendation for platform success)
@@ -126,38 +227,44 @@ FORMATTING RULES:
 - Use **Bold** for dates, prizes, and subjects.
 - Avoid vague conversational filler. Be an elite institutional guide."""
 
-        STRICT_RULES = """\n\nStrict Rules:
-1. You must ONLY answer questions related to the EduConnect platform (Events, Resources, Community). If a question is off-topic, decline to answer.
+        STRICT_RULES = """
+
+Strict Rules:
+1. ONLY answer questions related to the EduConnect platform.
 2. Absolutely NO abusive or inappropriate language."""
 
-        system_prompt = f"You are the Elite EduConnect Strategy Consultant. Your mission is to help users navigate the platform with world-class precision.{ELITE_FORMATS}{STRICT_RULES}"
+        system_prompt = (
+            "You are the Elite EduConnect Strategy Consultant. "
+            "Your mission is to help users navigate the platform with world-class precision."
+            + ELITE_FORMATS
+            + STRICT_RULES
+        )
 
-        history = get_session(session_id)
-        messages = [SystemMessage(content=system_prompt)]
+        # Load history (DB if available, else in-memory fallback)
+        history = await _load_session(session_id)
+
+        messages: list = [SystemMessage(content=system_prompt)]
         for msg in history[-8:]:
             messages.append(msg)
 
-        full_message = f"""Here is the current real-time data from the platform:
-{platform_data}
-
-Additional Academic Context:
-{semantic_context}
-
-User's Request:
-{message}"""
-
+        full_message = (
+            f"Here is the current real-time data from the platform:\n{platform_data}"
+            f"\n\nAdditional Academic Context:{semantic_context}"
+            f"\n\nUser's Request:\n{message}"
+        )
         messages.append(HumanMessage(content=full_message))
 
         llm = get_llm()
         response = await llm.ainvoke(messages)
         reply = response.content
 
+        # Persist updated history
         history.append(HumanMessage(content=message))
         history.append(AIMessage(content=reply))
+        await _save_session(session_id, history)
 
-        return {
-            "reply": reply,
-            "session_id": session_id
-        }
-    except Exception as e:
-        return {"reply": f"Sorry, I encountered an error: {str(e)}", "session_id": session_id}
+        # FIX 1 — returns "reply" not "answer"
+        return {"reply": reply, "session_id": session_id}
+
+    except Exception as exc:
+        return {"reply": f"Sorry, I encountered an error: {str(exc)}", "session_id": session_id}

@@ -1,53 +1,79 @@
+"""
+rag_service.py — FIXED: sessions now persist to DB via ChatSession model.
+
+Instead of the in-memory _sessions = {} dict (wiped on restart),
+we load/save from the PostgreSQL ChatSession table through the Node backend.
+"""
+
+from importlib import import_module
+
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage, AIMessage
 from app.core.config import settings
 from app.services.ingestion import search_similar
-from typing import List
+from app.services.session_store import SessionStore
+from typing import List, Optional
+import json
+
+try:
+    ChatGroq = import_module("langchain_groq").ChatGroq
+except ImportError:
+    ChatGroq = None
+
+# Initialise the DB-backed session store (shared across rag + bot services)
+_store = SessionStore()
+
 
 def get_llm():
     if settings.GROQ_API_KEY:
-        # pyrefly: ignore [missing-import]
-        from langchain_groq import ChatGroq
-        return ChatGroq(
-            model="llama-3.3-70b-versatile",
-            groq_api_key=settings.GROQ_API_KEY,
-            temperature=0.3,
-        )
+        if ChatGroq is not None:
+            return ChatGroq(
+                model="llama-3.3-70b-versatile",
+                groq_api_key=settings.GROQ_API_KEY,
+                temperature=0.3,
+            )
     return ChatGoogleGenerativeAI(
         model="gemini-2.0-flash",
         google_api_key=settings.GEMINI_API_KEY,
         temperature=0.3,
     )
 
-# In-memory chat history per session
-_sessions = {}
 
-def get_session(session_id: str) -> List:
-    if session_id not in _sessions:
-        _sessions[session_id] = []
-    return _sessions[session_id]
+async def get_session(session_id: str, student_id: Optional[str] = None, resource_id: Optional[str] = None) -> List:
+    """Load message history from DB. Falls back to [] on error."""
+    return await _store.load(session_id, bot_type="RAG", student_id=student_id, resource_id=resource_id)
 
-def clear_session(session_id: str):
-    if session_id in _sessions:
-        del _sessions[session_id]
 
-async def rag_chat(question: str, session_id: str, resource_id: str = None, role: str = None) -> dict:
+async def save_session(session_id: str, history: List):
+    """Persist updated history to DB."""
+    await _store.save(session_id, history)
+
+
+async def clear_session(session_id: str):
+    await _store.clear(session_id)
+
+
+async def rag_chat(
+    question: str,
+    session_id: str,
+    resource_id: Optional[str] = None,
+    role: Optional[str] = None,
+    student_id: Optional[str] = None,
+) -> dict:
     try:
-        # Search for relevant chunks
-        chunks = search_similar(question, resource_id=resource_id, top_k=4)
-
-        # Fallback: if no chunks for this specific resource, try all resources
+        # Search for relevant chunks in ChromaDB
+        chunks = search_similar(question, resource_id=resource_id, top_k=4) if resource_id else search_similar(question, top_k=4)
         if not chunks and resource_id:
-            chunks = search_similar(question, resource_id=None, top_k=4)
+            chunks = search_similar(question, top_k=4)
 
         if not chunks:
-            context = "No uploaded documents matched this query. Use your general education knowledge to help the user."
+            context = "No uploaded documents matched this query. Use your general education knowledge."
         else:
             context = "\n\n".join([f"[Source {i+1}]: {c['text']}" for i, c in enumerate(chunks)])
 
-        # Build prompt
-        # Premium Formatting & Security Core
-        ELITE_FORMATS = """\n\nSTRICT RESPONSE STRUCTURE:
+        ELITE_FORMATS = """
+
+STRICT RESPONSE STRUCTURE:
 1. ### 🎯 Executive Summary (1-sentence concise context)
 2. ### 📊 Structured Intelligence (Use Markdown TABLES or BOLDED LISTS only)
 3. ### 💡 Expert Pro-Tip (A specific, actionable strategy)
@@ -58,60 +84,53 @@ FORMATTING RULES:
 - Use **Bold** for terminology.
 - Avoid vague conversational filler. Be precise and institutional."""
 
-        STRICT_RULES = """\n\nStrict Rules:
-1. You must ONLY answer questions related to the provided educational context or the EduConnect platform. If a question is off-topic, decline to answer.
+        STRICT_RULES = """
+
+Strict Rules:
+1. Only answer questions related to the provided educational context or EduConnect platform.
 2. Absolutely NO abusive or inappropriate language."""
 
-        # Role-specific persona tailoring
         if role == "TEACHER":
-            persona = "You are a Master Curriculum Architect for EduConnect. Help teachers with high-level syllabus and assessment structure."
+            persona = "You are a Master Curriculum Architect for EduConnect. Help teachers with syllabus and assessment structure."
         elif role == "SCHOOL":
-            persona = "You are an Institutional Strategist for EduConnect. Help principals with operational excellence and stakeholder alignment."
+            persona = "You are an Institutional Strategist for EduConnect. Help principals with operational excellence."
         elif role == "ADMIN":
-            persona = "You are a Lead Systems Auditor for EduConnect. Help admins with technical precision and safety protocols."
-        else: # STUDENT (Default)
-            persona = "You are an Elite Study Performance Coach for EduConnect. Help students master complex topics with high-efficiency strategies."
+            persona = "You are a Lead Systems Auditor for EduConnect. Help admins with technical precision."
+        else:
+            persona = "You are an Elite Study Performance Coach for EduConnect. Help students master complex topics."
 
         system_prompt = f"{persona}{ELITE_FORMATS}{STRICT_RULES}\n\nContext for this session:\n{context}"
 
-        history = get_session(session_id)
+        # Load history from DB
+        history = await get_session(session_id, student_id=student_id, resource_id=resource_id)
 
-        messages = [SystemMessage(content=system_prompt)]
-        for msg in history[-6:]:  # keep last 6 messages
+        messages: List[BaseMessage] = [SystemMessage(content=system_prompt)]
+        for msg in history[-6:]:
             messages.append(msg)
 
-        full_prompt = f"""Context from study materials:
-{context}
-
-Question: {question}
-
-Please answer based on the context above."""
-
+        full_prompt = f"Context from study materials:\n{context}\n\nQuestion: {question}\n\nAnswer based on the context above."
         messages.append(HumanMessage(content=full_prompt))
 
         llm = get_llm()
         response = await llm.ainvoke(messages)
         answer = response.content
 
-        # Save to history
+        # Save to DB (append user + AI turns)
         history.append(HumanMessage(content=question))
-        from langchain_core.messages import AIMessage
         history.append(AIMessage(content=answer))
+        await save_session(session_id, history)
 
-        # Format sources
-        sources = []
-        for c in chunks[:3]:
-            sources.append({
+        sources = [
+            {
                 "text": c["text"][:200] + "...",
                 "resource_id": c["metadata"].get("resource_id"),
                 "title": c["metadata"].get("title"),
-                "score": round(c["score"], 3)
-            })
+                "score": round(c["score"], 3),
+            }
+            for c in chunks[:3]
+        ]
 
-        return {
-            "answer": answer,
-            "sources": sources,
-            "session_id": session_id
-        }
+        return {"answer": answer, "sources": sources, "session_id": session_id}
+
     except Exception as e:
         return {"answer": f"Error: {str(e)}", "sources": [], "session_id": session_id}
