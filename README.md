@@ -209,21 +209,36 @@ The application uses **10 interconnected models** managed by Prisma ORM:
 
 ```mermaid
 erDiagram
-    School ||--o{ User : "has members"
-    School ||--o{ Event : "hosts"
-    School ||--o{ Resource : "manages"
-    User ||--o{ Registration : "registers"
-    User ||--o{ Resource : "uploads"
-    User ||--o{ ForumPost : "authors"
-    User ||--o{ Certificate : "earns"
-    User ||--o{ ChatSession : "creates"
-    User ||--o{ StudyPlan : "receives"
-    Event ||--o{ Registration : "accepts"
-    Event ||--o{ Leaderboard : "tracks"
-    Event ||--o{ Certificate : "awards"
-    Event ||--o{ ForumPost : "discusses"
-    Resource ||--o{ ChatSession : "references"
+    School
+    User
+    Event
+    Resource
+    Registration
+    ForumPost
+    Certificate
+    ChatSession
+    StudyPlan
+    Leaderboard
+
+    School ||--o{ User : has_members
+    School ||--o{ Event : hosts
+    School ||--o{ Resource : manages
+
+    User ||--o{ Registration : registers
+    User ||--o{ Resource : uploads
+    User ||--o{ ForumPost : authors
+    User ||--o{ Certificate : earns
+    User ||--o{ ChatSession : creates
+    User ||--o{ StudyPlan : receives
+
+    Event ||--o{ Registration : accepts
+    Event ||--o{ Leaderboard : tracks
+    Event ||--o{ Certificate : awards
+    Event ||--o{ ForumPost : discusses
+
+    Resource ||--o{ ChatSession : references
 ```
+
 
 ### User Roles
 
@@ -234,7 +249,6 @@ erDiagram
 | **TEACHER** | Upload resources, participate in forums, manage students |
 | **STUDENT** | Register for events, access resources, earn certificates, use AI tools |
 
----
 
 ## 🚀 Getting Started
 
