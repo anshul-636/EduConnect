@@ -4,6 +4,7 @@ import useAuthStore from './store/authStore';
 // Auth
 import Login    from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import OAuthCallback from './pages/auth/OAuthCallback';
 
 // Dashboards
 import { StudentDashboard, TeacherDashboard, SchoolDashboard, AdminDashboard } from './pages/dashboard/index';
@@ -73,6 +74,7 @@ export default function App() {
         {/* Public */}
         <Route path="/login"    element={<PublicRoute><Login/></PublicRoute>}/>
         <Route path="/register" element={<PublicRoute><Register/></PublicRoute>}/>
+        <Route path="/auth/callback" element={<OAuthCallback/>}/>
 
         {/* Dashboard redirect */}
         <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect/></ProtectedRoute>}/>

@@ -5,6 +5,7 @@ Instead of the in-memory _sessions = {} dict (wiped on restart),
 we load/save from the PostgreSQL ChatSession table through the Node backend.
 """
 
+import asyncio
 from importlib import import_module
 
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -25,18 +26,19 @@ _store = SessionStore()
 
 
 def get_llm():
-    if settings.GROQ_API_KEY:
-        if ChatGroq is not None:
-            return ChatGroq(
-                model="llama-3.3-70b-versatile",
-                groq_api_key=settings.GROQ_API_KEY,
-                temperature=0.3,
-            )
-    return ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
-        google_api_key=settings.GEMINI_API_KEY,
-        temperature=0.3,
-    )
+    if settings.GEMINI_API_KEY:
+        return ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash",
+            google_api_key=settings.GEMINI_API_KEY,
+            temperature=0.2,
+        )
+    if settings.GROQ_API_KEY and ChatGroq is not None:
+        return ChatGroq(
+            model="llama-3.3-70b-versatile",
+            groq_api_key=settings.GROQ_API_KEY,
+            temperature=0.2,
+        )
+    raise RuntimeError("No AI provider configured. Set GEMINI_API_KEY or GROQ_API_KEY.")
 
 
 async def get_session(session_id: str, student_id: Optional[str] = None, resource_id: Optional[str] = None) -> List:
@@ -61,8 +63,13 @@ async def rag_chat(
     student_id: Optional[str] = None,
 ) -> dict:
     try:
-        # Search for relevant chunks in ChromaDB
-        chunks = search_similar(question, resource_id=resource_id, top_k=4) if resource_id else search_similar(question, top_k=4)
+        # Search for relevant chunks in ChromaDB; keep it small to reduce latency.
+        chunks = await asyncio.to_thread(
+            search_similar,
+            question,
+            resource_id=resource_id,
+            top_k=2,
+        ) if resource_id else await asyncio.to_thread(search_similar, question, top_k=2)
         if not chunks and resource_id:
             chunks = search_similar(question, top_k=4)
 
@@ -73,16 +80,15 @@ async def rag_chat(
 
         ELITE_FORMATS = """
 
-STRICT RESPONSE STRUCTURE:
-1. ### 🎯 Executive Summary (1-sentence concise context)
-2. ### 📊 Structured Intelligence (Use Markdown TABLES or BOLDED LISTS only)
-3. ### 💡 Expert Pro-Tip (A specific, actionable strategy)
+    STRICT RESPONSE STRUCTURE:
+    1. One short answer first.
+    2. Then up to 2 concise bullet points.
+    3. End with one practical tip.
 
-FORMATTING RULES:
-- Use ### for headers.
-- Use | Tables | for data/schedules.
-- Use **Bold** for terminology.
-- Avoid vague conversational filler. Be precise and institutional."""
+    FORMATTING RULES:
+    - Keep it brief.
+    - Avoid large tables unless the user explicitly asks for them.
+    - Be precise and direct."""
 
         STRICT_RULES = """
 
@@ -105,7 +111,7 @@ Strict Rules:
         history = await get_session(session_id, student_id=student_id, resource_id=resource_id)
 
         messages: List[BaseMessage] = [SystemMessage(content=system_prompt)]
-        for msg in history[-6:]:
+        for msg in history[-4:]:
             messages.append(msg)
 
         full_prompt = f"Context from study materials:\n{context}\n\nQuestion: {question}\n\nAnswer based on the context above."

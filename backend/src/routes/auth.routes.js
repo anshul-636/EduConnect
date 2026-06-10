@@ -9,7 +9,7 @@ const router = Router();
 
 const emailValidation = body('email')
   .trim()
-  .matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$/)
+  .matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
   .withMessage('Please enter a valid email (e.g. name@gmail.com).');
 
 const registerValidation = [

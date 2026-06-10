@@ -11,6 +11,8 @@ Errors corrected:
  7. _store created inside try/except — bad import no longer crashes startup
 """
 
+import asyncio
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from app.core.config import settings
@@ -34,6 +36,12 @@ _sessions: dict = {}
 
 # ── LLM factory ───────────────────────────────────────────────────────────────
 def get_llm():
+    if settings.GEMINI_API_KEY:
+        return ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash",
+            google_api_key=settings.GEMINI_API_KEY,
+            temperature=0.2,
+        )
     if settings.GROQ_API_KEY:
         try:
             import importlib
@@ -42,15 +50,11 @@ def get_llm():
             return ChatGroq(
                 model="llama-3.3-70b-versatile",
                 groq_api_key=settings.GROQ_API_KEY,
-                temperature=0.5,
+                temperature=0.2,
             )
         except ImportError:
             pass
-    return ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
-        google_api_key=settings.GEMINI_API_KEY,
-        temperature=0.5,
-    )
+    raise RuntimeError("No AI provider configured. Set GEMINI_API_KEY or GROQ_API_KEY.")
 
 
 # ── Session helpers ───────────────────────────────────────────────────────────
@@ -101,11 +105,23 @@ async def fetch_platform_data(query: str) -> str:
         clean_query = query.strip()
 
         async with httpx.AsyncClient() as client:
-            # Events
-            events_res = await client.get(
+            # Fetch the platform sources in parallel to keep chat responses snappy.
+            events_task = client.get(
                 f"{settings.NODE_BACKEND_URL}/api/v1/events?search={clean_query}",
-                timeout=5,
+                timeout=4,
             )
+            resources_task = client.get(
+                f"{settings.NODE_BACKEND_URL}/api/v1/resources?search={clean_query}",
+                timeout=4,
+            )
+            leaderboard_task = client.get(
+                f"{settings.NODE_BACKEND_URL}/api/v1/leaderboard",
+                timeout=4,
+            )
+            events_res, res_response, lb_response = await asyncio.gather(
+                events_task, resources_task, leaderboard_task
+            )
+
             events: list = []
             if events_res.status_code == 200:
                 payload = events_res.json().get("data", [])
@@ -114,17 +130,12 @@ async def fetch_platform_data(query: str) -> str:
 
             if not events:
                 fallback = await client.get(
-                    f"{settings.NODE_BACKEND_URL}/api/v1/events", timeout=5
+                    f"{settings.NODE_BACKEND_URL}/api/v1/events", timeout=4
                 )
                 if fallback.status_code == 200:
                     payload = fallback.json().get("data", [])
                     events = payload if isinstance(payload, list) else payload.get("items", [])
 
-            # Resources
-            res_response = await client.get(
-                f"{settings.NODE_BACKEND_URL}/api/v1/resources?search={clean_query}",
-                timeout=5,
-            )
             resources: list = []
             if res_response.status_code == 200:
                 payload = res_response.json().get("data", [])
@@ -132,16 +143,12 @@ async def fetch_platform_data(query: str) -> str:
 
             if not resources:
                 fallback = await client.get(
-                    f"{settings.NODE_BACKEND_URL}/api/v1/resources", timeout=5
+                    f"{settings.NODE_BACKEND_URL}/api/v1/resources", timeout=4
                 )
                 if fallback.status_code == 200:
                     payload = fallback.json().get("data", [])
                     resources = payload if isinstance(payload, list) else payload.get("items", [])
 
-            # Leaderboard
-            lb_response = await client.get(
-                f"{settings.NODE_BACKEND_URL}/api/v1/leaderboard", timeout=5
-            )
             leaders: list = []
             if lb_response.status_code == 200:
                 leaders = lb_response.json().get("data", [])
@@ -216,16 +223,15 @@ async def platform_chat(message: str, session_id: str) -> dict:
 
         ELITE_FORMATS = """
 
-STRICT RESPONSE STRUCTURE:
-1. ### 🎯 Platform Snapshot (1-sentence concise summary)
-2. ### 📊 Navigation Intelligence (Use Markdown TABLES or BOLDED LISTS only)
-3. ### 💡 Proactive Tip (A specific recommendation for platform success)
+    STRICT RESPONSE STRUCTURE:
+    1. Give a very short answer first.
+    2. Use at most 3 bullets.
+    3. End with one practical next step.
 
-FORMATTING RULES:
-- Use ### for headers.
-- Use | Tables | for event listings or data.
-- Use **Bold** for dates, prizes, and subjects.
-- Avoid vague conversational filler. Be an elite institutional guide."""
+    FORMATTING RULES:
+    - Keep the response short.
+    - Avoid tables unless the user explicitly asks.
+    - Be direct and actionable."""
 
         STRICT_RULES = """
 
@@ -244,7 +250,7 @@ Strict Rules:
         history = await _load_session(session_id)
 
         messages: list = [SystemMessage(content=system_prompt)]
-        for msg in history[-8:]:
+        for msg in history[-4:]:
             messages.append(msg)
 
         full_message = (

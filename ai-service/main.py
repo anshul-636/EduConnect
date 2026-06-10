@@ -24,3 +24,13 @@ app.include_router(recommend.router, prefix="/api/v1")
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "EduConnect AI Service"}
+
+
+if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.freeze_support()
+    import os
+    import uvicorn
+
+    port = int(os.environ.get("PORT", 8001))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
