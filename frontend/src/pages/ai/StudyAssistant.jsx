@@ -78,7 +78,8 @@ const StudyAssistant = () => {
   useEffect(() => {
     resourceService.getAll({ type: 'PDF' })
       .then(res => {
-        setResources(res.data || []);
+        const payload = res?.data?.data ?? res?.data ?? [];
+        setResources(Array.isArray(payload) ? payload : []);
       })
       .catch(err => {
         console.error(err);

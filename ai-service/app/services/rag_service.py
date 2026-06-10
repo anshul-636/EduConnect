@@ -15,6 +15,7 @@ from app.services.ingestion import search_similar
 from app.services.session_store import SessionStore
 from typing import List, Optional
 import json
+import importlib
 
 try:
     ChatGroq = import_module("langchain_groq").ChatGroq
@@ -27,11 +28,14 @@ _store = SessionStore()
 
 def get_llm():
     if settings.GEMINI_API_KEY:
-        return ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
-            google_api_key=settings.GEMINI_API_KEY,
-            temperature=0.2,
-        )
+        try:
+            return ChatGoogleGenerativeAI(
+                model="gemini-2.0-flash",
+                google_api_key=settings.GEMINI_API_KEY,
+                temperature=0.2,
+            )
+        except Exception:
+            pass
     if settings.GROQ_API_KEY and ChatGroq is not None:
         return ChatGroq(
             model="llama-3.3-70b-versatile",
@@ -39,6 +43,11 @@ def get_llm():
             temperature=0.2,
         )
     raise RuntimeError("No AI provider configured. Set GEMINI_API_KEY or GROQ_API_KEY.")
+
+
+def _is_quota_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return any(token in message for token in ["resource_exhausted", "quota", "429", "rate limit"])
 
 
 async def get_session(session_id: str, student_id: Optional[str] = None, resource_id: Optional[str] = None) -> List:
@@ -118,7 +127,18 @@ Strict Rules:
         messages.append(HumanMessage(content=full_prompt))
 
         llm = get_llm()
-        response = await llm.ainvoke(messages)
+        try:
+            response = await llm.ainvoke(messages)
+        except Exception as exc:
+            if settings.GEMINI_API_KEY and _is_quota_error(exc) and settings.GROQ_API_KEY and ChatGroq is not None:
+                fallback_llm = ChatGroq(
+                    model="llama-3.3-70b-versatile",
+                    groq_api_key=settings.GROQ_API_KEY,
+                    temperature=0.2,
+                )
+                response = await fallback_llm.ainvoke(messages)
+            else:
+                raise
         answer = response.content
 
         # Save to DB (append user + AI turns)

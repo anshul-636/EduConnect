@@ -19,6 +19,7 @@ from app.core.config import settings
 from app.services.ingestion import search_similar   # still used below ✓
 from typing import List
 import httpx
+import importlib
 
 # ── Session store — DB-backed with safe in-memory fallback ────────────────────
 try:
@@ -35,25 +36,41 @@ _sessions: dict = {}
 
 
 # ── LLM factory ───────────────────────────────────────────────────────────────
-def get_llm():
-    if settings.GEMINI_API_KEY:
-        return ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
-            google_api_key=settings.GEMINI_API_KEY,
+def _is_quota_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    return any(token in message for token in ["resource_exhausted", "quota", "429", "rate limit"])
+
+
+def _get_groq_llm():
+    if not settings.GROQ_API_KEY:
+        return None
+
+    try:
+        _mod = importlib.import_module("langchain_groq")
+        ChatGroq = getattr(_mod, "ChatGroq")
+        return ChatGroq(
+            model="llama-3.3-70b-versatile",
+            groq_api_key=settings.GROQ_API_KEY,
             temperature=0.2,
         )
-    if settings.GROQ_API_KEY:
+    except Exception:
+        return None
+
+
+def get_llm():
+    if settings.GEMINI_API_KEY:
         try:
-            import importlib
-            _mod = importlib.import_module("langchain_groq")
-            ChatGroq = getattr(_mod, "ChatGroq")
-            return ChatGroq(
-                model="llama-3.3-70b-versatile",
-                groq_api_key=settings.GROQ_API_KEY,
+            return ChatGoogleGenerativeAI(
+                model="gemini-2.0-flash",
+                google_api_key=settings.GEMINI_API_KEY,
                 temperature=0.2,
             )
-        except ImportError:
+        except Exception:
             pass
+
+    groq_llm = _get_groq_llm()
+    if groq_llm is not None:
+        return groq_llm
     raise RuntimeError("No AI provider configured. Set GEMINI_API_KEY or GROQ_API_KEY.")
 
 
@@ -261,7 +278,17 @@ Strict Rules:
         messages.append(HumanMessage(content=full_message))
 
         llm = get_llm()
-        response = await llm.ainvoke(messages)
+        try:
+            response = await llm.ainvoke(messages)
+        except Exception as exc:
+            if settings.GEMINI_API_KEY and _is_quota_error(exc):
+                fallback_llm = _get_groq_llm()
+                if fallback_llm is not None:
+                    response = await fallback_llm.ainvoke(messages)
+                else:
+                    raise RuntimeError("Gemini quota exceeded and Groq fallback is not configured.") from exc
+            else:
+                raise
         reply = response.content
 
         # Persist updated history

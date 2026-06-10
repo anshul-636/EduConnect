@@ -22,7 +22,10 @@ const Forum = () => {
 
   const fetchPosts = () => {
     forumService.getAll()
-      .then(res => setPosts(res.data))
+      .then(res => {
+        const payload = res?.data?.data ?? res?.data ?? [];
+        setPosts(Array.isArray(payload) ? payload : []);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   };
