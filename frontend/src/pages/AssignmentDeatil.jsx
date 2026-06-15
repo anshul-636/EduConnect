@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Send, Star, User, Calendar, CheckCircle2, Clock, FileText } from 'lucide-react';
+import { ArrowLeft, Send, Star, User, Calendar, CheckCircle2, Clock, FileText, Paperclip, X } from 'lucide-react';
 import Layout from '../components/common/Layout';
 import assignmentService from '../services/assignmentService';
 import useAuthStore from '../store/authStore';
@@ -19,9 +19,11 @@ export default function AssignmentDetail() {
   const [assignment, setAssignment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState('');
+  const [file, setFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-  const [gradeMap, setGradeMap] = useState({});   // submissionId → {score, feedback}
+  const [gradeMap, setGradeMap] = useState({});
   const [gradingId, setGradingId] = useState(null);
+  const fileInputRef = useRef(null);
 
   const isTeacher = user?.role === 'TEACHER' || user?.role === 'SCHOOL';
 
@@ -37,11 +39,13 @@ export default function AssignmentDetail() {
   };
 
   const handleSubmit = async () => {
-    if (!content.trim()) return;
+    if (!content.trim() && !file) return;
     setSubmitting(true);
     try {
-      await assignmentService.submit(id, { content });
+      await assignmentService.submit(id, content, file);
       setContent('');
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
       load();
     } catch (e) { alert(e.response?.data?.message || 'Submission failed'); }
     setSubmitting(false);
@@ -136,6 +140,12 @@ export default function AssignmentDetail() {
                 {mySubmission.content && (
                   <div className="bg-dark-900 rounded-xl p-4 text-dark-200 text-sm whitespace-pre-line mb-3">{mySubmission.content}</div>
                 )}
+                {mySubmission.fileUrl && (
+                  <a href={mySubmission.fileUrl} target="_blank" rel="noreferrer"
+                    className="inline-flex items-center gap-2 mb-3 text-sm text-brand-400 hover:text-brand-300 bg-brand-900/20 border border-brand-700/30 px-3 py-2 rounded-xl transition-colors">
+                    <Paperclip size={13}/> View submitted file
+                  </a>
+                )}
                 {mySubmission.feedback && (
                   <div className="bg-emerald-900/20 border border-emerald-700/30 rounded-xl p-4">
                     <p className="text-emerald-400 text-xs font-semibold uppercase tracking-wide mb-1">Teacher Feedback</p>
@@ -151,12 +161,34 @@ export default function AssignmentDetail() {
             )}
 
             {(!isPast || assignment.allowLate) && (
-              <div className="mt-4">
+              <div className="mt-4 space-y-3">
                 <textarea value={content} onChange={e => setContent(e.target.value)}
-                  placeholder="Write your answer here…" rows={5}
+                  placeholder="Write your answer here… (optional if attaching a file)"
+                  rows={5}
                   className="w-full bg-dark-900 border border-dark-700 rounded-xl px-4 py-3 text-sm text-dark-100 placeholder:text-dark-500 focus:outline-none focus:border-violet-500 resize-none"/>
-                <button onClick={handleSubmit} disabled={submitting || !content.trim()}
-                  className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-semibold text-sm bg-gradient-to-r from-violet-600 to-purple-600 hover:opacity-90 transition-opacity disabled:opacity-50">
+
+                {/* File attachment */}
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dark-700 text-dark-300 hover:text-dark-100 hover:border-dark-500 text-sm transition-colors">
+                    <Paperclip size={14}/> Attach file
+                  </button>
+                  {file && (
+                    <div className="flex items-center gap-2 text-xs text-dark-300 bg-dark-900 border border-dark-700 rounded-xl px-3 py-2">
+                      <FileText size={12} className="text-brand-400"/>
+                      <span className="max-w-[200px] truncate">{file.name}</span>
+                      <button onClick={() => { setFile(null); if(fileInputRef.current) fileInputRef.current.value=''; }}
+                        className="text-dark-500 hover:text-red-400 transition-colors ml-1">
+                        <X size={12}/>
+                      </button>
+                    </div>
+                  )}
+                  <input ref={fileInputRef} type="file" className="hidden"
+                    onChange={e => setFile(e.target.files[0] || null)}/>
+                </div>
+
+                <button onClick={handleSubmit} disabled={submitting || (!content.trim() && !file)}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-semibold text-sm bg-gradient-to-r from-violet-600 to-purple-600 hover:opacity-90 transition-opacity disabled:opacity-50">
                   <Send size={14}/> {submitting ? 'Submitting…' : mySubmission ? 'Resubmit' : 'Submit'}
                 </button>
               </div>
@@ -195,6 +227,12 @@ export default function AssignmentDetail() {
                       </div>
                       {sub.content && (
                         <p className="text-dark-300 text-sm bg-dark-900 rounded-xl p-3 mb-3 whitespace-pre-line">{sub.content}</p>
+                      )}
+                      {sub.fileUrl && (
+                        <a href={sub.fileUrl} target="_blank" rel="noreferrer"
+                          className="inline-flex items-center gap-2 mb-3 text-xs text-brand-400 hover:text-brand-300 bg-brand-900/20 border border-brand-700/30 px-3 py-1.5 rounded-xl transition-colors">
+                          <Paperclip size={12}/> View submission file
+                        </a>
                       )}
                       {/* Grade row */}
                       <div className="flex items-center gap-2 flex-wrap">

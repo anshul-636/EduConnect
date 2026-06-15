@@ -13,6 +13,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   redis:
     image: redis:7-alpine
@@ -20,6 +25,52 @@ services:
     ports:
       - "6380:6379"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+  
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: educonnect_backend
+    env_file: ./backend/.env
+    environment:
+      DATABASE_URL:postgresql://postgres:password@postgres:5432/educonnect
+      REDIS_URL:redis://redis:6379
+      AI_SERVICE_URL:http://ai-service:8000
+      NODE_ENV:production
+    ports:
+     - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./backend:/uploads:/app/uploads
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: educonnect_ai
+    env_file: ./ai-service/.env
+    environment:
+      NODE_BACKEND_URL:http://backend:3000
+      PORT:8000
+    ports:
+     - "8000:8000"
+    depends_on:
+      -backend
+    restart: unless-stopped
+    volumes:
+      - chroma_data:/app/chroma_db
+
 
 volumes:
   postgres_data:
+  chroma_data:

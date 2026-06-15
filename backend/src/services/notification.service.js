@@ -22,7 +22,7 @@ class NotificationService {
     // Non-blocking WebSocket push (if user is connected)
     try {
       const { broadcastToUser } = require('../utils/websocket');
-      broadcastToUser(userId, { event: 'notification', payload: notification });
+      broadcastToUser(userId, { event: 'notification', payload: { notification } });
     } catch (_) {
       // WebSocket not available — that's fine
     }
@@ -44,7 +44,7 @@ class NotificationService {
     try {
       const { broadcastToUser } = require('../utils/websocket');
       notifications.forEach((n) => {
-        broadcastToUser(n.userId, { event: 'notification', payload: n });
+        broadcastToUser(n.userId, { event: 'notification', payload: { notification: n } });
       });
     } catch (_) {}
 

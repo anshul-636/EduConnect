@@ -5,6 +5,7 @@ const cors    = require('cors');
 const session = require('express-session');
 const passport = require('./utils/passport');
 const { setupWebSocket } = require('./utils/websocket');
+const { connect: connectRedis } = require('./utils/redis');
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 const authRoutes         = require('./routes/auth.routes');
@@ -22,6 +23,7 @@ const classRoutes        = require('./routes/class.routes');
 const assignmentRoutes   = require('./routes/assignment.routes');
 const attendanceRoutes   = require('./routes/attendance.routes');
 const announcementRoutes = require('./routes/announcement.routes');
+const timetableRoutes    = require('./routes/timetable.routes');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -50,6 +52,7 @@ app.use(API + '/classes',       classRoutes);
 app.use(API + '/assignments',   assignmentRoutes);
 app.use(API + '/attendance',    attendanceRoutes);
 app.use(API + '/announcements', announcementRoutes);
+app.use(API + '/timetable',     timetableRoutes);
 app.use('/internal',            internalRoutes);
 
 app.get('/health', (_, res) => res.json({ status: 'ok', version: '2.0.0' }));
@@ -63,6 +66,7 @@ app.use((err, req, res, next) => {
 
 const server = http.createServer(app);
 setupWebSocket(server);
+connectRedis(); // non-blocking — logs success/failure but won't crash the server
 server.listen(PORT, () => {
   console.log('');
   console.log('  ╔═══════════════════════════════════════╗');

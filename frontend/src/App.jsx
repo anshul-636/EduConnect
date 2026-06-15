@@ -2,9 +2,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import useAuthStore from './store/authStore';
 
 // Auth
-import Login    from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import OAuthCallback from './pages/auth/OAuthCallback';
+import Login          from './pages/auth/Login';
+import Register       from './pages/auth/Register';
+import OAuthCallback  from './pages/auth/OAuthCallback';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import VerifyEmail    from './pages/auth/VerifyEmail';
+import ResetPassword  from './pages/auth/ResetPassword';
 
 // Dashboards
 import { StudentDashboard, TeacherDashboard, SchoolDashboard, AdminDashboard } from './pages/dashboard/index';
@@ -75,6 +78,9 @@ export default function App() {
         <Route path="/login"    element={<PublicRoute><Login/></PublicRoute>}/>
         <Route path="/register" element={<PublicRoute><Register/></PublicRoute>}/>
         <Route path="/auth/callback" element={<OAuthCallback/>}/>
+        <Route path="/forgot-password" element={<PublicRoute><ForgotPassword/></PublicRoute>}/>
+        <Route path="/verify-email"    element={<VerifyEmail/>}/>
+        <Route path="/reset-password"  element={<ResetPassword/>}/>
 
         {/* Dashboard redirect */}
         <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect/></ProtectedRoute>}/>
