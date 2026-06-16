@@ -1,25 +1,30 @@
 """
-platform_bot.py  —  Fixed version.
+platform_bot.py
 
-Errors corrected:
- 1. Return key changed back to "reply" (matches router + frontend)
- 2. Function signature restored to (message, session_id) — matches router call
- 3. search_similar is now actually used (like original) — import no longer dead
- 4. session_store imported safely with try/except fallback to in-memory
- 5. clear_session kept synchronous so router can call it without await
- 6. Loop variables renamed (ev, res_item, lead_item) — no more 'e' conflict
- 7. _store created inside try/except — bad import no longer crashes startup
+LLM priority: Groq (primary) → Gemini (fallback if quota hit and key present).
+Sessions persist to PostgreSQL via the Node backend when available;
+falls back to in-memory if the backend is unreachable.
 """
 
 import asyncio
+import importlib
+from typing import List
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+import httpx
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from app.core.config import settings
-from app.services.ingestion import search_similar   # still used below ✓
-from typing import List
-import httpx
-import importlib
+from app.services.ingestion import search_similar
+
+# ── LLM imports ───────────────────────────────────────────────────────────────
+try:
+    from langchain_groq import ChatGroq
+except ImportError:
+    ChatGroq = None
+
+try:
+    from langchain_google_genai import ChatGoogleGenerativeAI
+except ImportError:
+    ChatGoogleGenerativeAI = None
 
 # ── Session store — DB-backed with safe in-memory fallback ────────────────────
 try:
@@ -27,11 +32,10 @@ try:
     _store = SessionStore()
     _USE_DB_SESSIONS = True
 except (ImportError, Exception):
-    # session_store.py not deployed yet — fall back to in-memory
     _store = None
     _USE_DB_SESSIONS = False
 
-# Fallback in-memory store (original behaviour)
+# Fallback in-memory store
 _sessions: dict = {}
 
 
@@ -42,12 +46,9 @@ def _is_quota_error(exc: Exception) -> bool:
 
 
 def _get_groq_llm():
-    if not settings.GROQ_API_KEY:
+    if not settings.GROQ_API_KEY or ChatGroq is None:
         return None
-
     try:
-        _mod = importlib.import_module("langchain_groq")
-        ChatGroq = getattr(_mod, "ChatGroq")
         return ChatGroq(
             model="llama-3.3-70b-versatile",
             groq_api_key=settings.GROQ_API_KEY,
@@ -57,55 +58,58 @@ def _get_groq_llm():
         return None
 
 
-def get_llm():
-    if settings.GEMINI_API_KEY:
-        try:
-            return ChatGoogleGenerativeAI(
-                model="gemini-2.0-flash",
-                google_api_key=settings.GEMINI_API_KEY,
-                temperature=0.2,
-            )
-        except Exception:
-            pass
+def _get_gemini_llm():
+    if not settings.GEMINI_API_KEY or ChatGoogleGenerativeAI is None:
+        return None
+    try:
+        return ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash",
+            google_api_key=settings.GEMINI_API_KEY,
+            temperature=0.2,
+        )
+    except Exception:
+        return None
 
-    groq_llm = _get_groq_llm()
-    if groq_llm is not None:
-        return groq_llm
-    raise RuntimeError("No AI provider configured. Set GEMINI_API_KEY or GROQ_API_KEY.")
+
+def get_llm():
+    """Return Groq (primary). Falls back to Gemini if available."""
+    llm = _get_groq_llm()
+    if llm is not None:
+        return llm
+    llm = _get_gemini_llm()
+    if llm is not None:
+        return llm
+    raise RuntimeError(
+        "No AI provider configured. Set GROQ_API_KEY (or GEMINI_API_KEY) in your .env file."
+    )
 
 
 # ── Session helpers ───────────────────────────────────────────────────────────
 async def _load_session(session_id: str) -> List:
-    """Load history from DB if available, else from in-memory dict."""
     if _USE_DB_SESSIONS and _store:
         try:
             return await _store.load(session_id, bot_type="PLATFORM")
         except Exception:
             pass
-    # Fallback
     if session_id not in _sessions:
         _sessions[session_id] = []
     return _sessions[session_id]
 
 
 async def _save_session(session_id: str, history: List) -> None:
-    """Persist history to DB if available, else keep in-memory."""
     if _USE_DB_SESSIONS and _store:
         try:
             await _store.save(session_id, history)
             return
         except Exception:
             pass
-    # Fallback
     _sessions[session_id] = history
 
 
-# FIX 5 — clear_session stays synchronous so router can call without await
 def clear_session(session_id: str) -> None:
-    """Clear session (sync — compatible with existing router)."""
+    """Synchronous clear — compatible with the router (no await needed)."""
     _sessions.pop(session_id, None)
     if _USE_DB_SESSIONS and _store:
-        import asyncio
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
@@ -122,57 +126,42 @@ async def fetch_platform_data(query: str) -> str:
         clean_query = query.strip()
 
         async with httpx.AsyncClient() as client:
-            # Fetch the platform sources in parallel to keep chat responses snappy.
-            events_task = client.get(
-                f"{settings.NODE_BACKEND_URL}/api/v1/events?search={clean_query}",
-                timeout=4,
-            )
-            resources_task = client.get(
-                f"{settings.NODE_BACKEND_URL}/api/v1/resources?search={clean_query}",
-                timeout=4,
-            )
-            leaderboard_task = client.get(
-                f"{settings.NODE_BACKEND_URL}/api/v1/leaderboard",
-                timeout=4,
-            )
+            events_task      = client.get(f"{settings.NODE_BACKEND_URL}/api/v1/events?search={clean_query}", timeout=4)
+            resources_task   = client.get(f"{settings.NODE_BACKEND_URL}/api/v1/resources?search={clean_query}", timeout=4)
+            leaderboard_task = client.get(f"{settings.NODE_BACKEND_URL}/api/v1/leaderboard", timeout=4)
             events_res, res_response, lb_response = await asyncio.gather(
                 events_task, resources_task, leaderboard_task
             )
 
+            # Events
             events: list = []
             if events_res.status_code == 200:
                 payload = events_res.json().get("data", [])
-                # Handle both paginated {items:[]} and legacy [] shapes
                 events = payload if isinstance(payload, list) else payload.get("items", [])
-
             if not events:
-                fallback = await client.get(
-                    f"{settings.NODE_BACKEND_URL}/api/v1/events", timeout=4
-                )
+                fallback = await client.get(f"{settings.NODE_BACKEND_URL}/api/v1/events", timeout=4)
                 if fallback.status_code == 200:
                     payload = fallback.json().get("data", [])
                     events = payload if isinstance(payload, list) else payload.get("items", [])
 
+            # Resources
             resources: list = []
             if res_response.status_code == 200:
                 payload = res_response.json().get("data", [])
                 resources = payload if isinstance(payload, list) else payload.get("items", [])
-
             if not resources:
-                fallback = await client.get(
-                    f"{settings.NODE_BACKEND_URL}/api/v1/resources", timeout=4
-                )
+                fallback = await client.get(f"{settings.NODE_BACKEND_URL}/api/v1/resources", timeout=4)
                 if fallback.status_code == 200:
                     payload = fallback.json().get("data", [])
                     resources = payload if isinstance(payload, list) else payload.get("items", [])
 
+            # Leaderboard
             leaders: list = []
             if lb_response.status_code == 200:
                 leaders = lb_response.json().get("data", [])
 
         data_parts: List[str] = []
 
-        # FIX 6 — renamed loop vars to avoid shadowing 'e' in except block
         if events:
             event_strings = []
             for ev in events[:15]:
@@ -191,7 +180,7 @@ async def fetch_platform_data(query: str) -> str:
 
         if resources:
             res_strings = []
-            for res_item in resources[:15]:         # FIX 6 — was 'r'
+            for res_item in resources[:15]:
                 res_strings.append(
                     f"- **{res_item['title']}** ({res_item.get('type', 'PDF')})\n"
                     f"  * Subject: {res_item.get('subject') or 'General'}\n"
@@ -204,7 +193,7 @@ async def fetch_platform_data(query: str) -> str:
 
         if leaders:
             lead_lines = []
-            for lead_item in leaders[:5]:           # FIX 6 — was 'l'
+            for lead_item in leaders[:5]:
                 name   = lead_item.get("student", {}).get("name", "Unknown")
                 school = lead_item.get("school",  {}).get("name", "")
                 score  = lead_item.get("score", 0)
@@ -214,24 +203,21 @@ async def fetch_platform_data(query: str) -> str:
 
         return "\n\n".join(data_parts) if data_parts else "No active platform data available."
 
-    # FIX 6 — exception var 'exc' no longer conflicts with loop var 'e'
     except Exception as exc:
         return f"Could not fetch platform data: {str(exc)}"
 
 
 # ── Main chat function ─────────────────────────────────────────────────────────
-# FIX 1 + FIX 2 — signature and return key restored to match router exactly
 async def platform_chat(message: str, session_id: str) -> dict:
     """
     Called by router as:  platform_chat(req.message, req.session_id)
     Returns:              {"reply": ..., "session_id": ...}
     """
     try:
-        # Live platform data
         platform_data = await fetch_platform_data(message)
 
-        # FIX 3 — search_similar is now actually used (wasn't in the broken version)
-        semantic_results = search_similar(message, top_k=2)
+        # Run sync search_similar in a thread to avoid blocking the event loop
+        semantic_results = await asyncio.to_thread(search_similar, message, top_k=2)
         semantic_context = ""
         if semantic_results:
             semantic_context = "\nRELATED STUDY MATERIALS:\n" + "\n".join(
@@ -263,7 +249,6 @@ Strict Rules:
             + STRICT_RULES
         )
 
-        # Load history (DB if available, else in-memory fallback)
         history = await _load_session(session_id)
 
         messages: list = [SystemMessage(content=system_prompt)]
@@ -281,22 +266,23 @@ Strict Rules:
         try:
             response = await llm.ainvoke(messages)
         except Exception as exc:
-            if settings.GEMINI_API_KEY and _is_quota_error(exc):
-                fallback_llm = _get_groq_llm()
-                if fallback_llm is not None:
-                    response = await fallback_llm.ainvoke(messages)
+            if _is_quota_error(exc):
+                fallback = _get_gemini_llm()
+                if fallback is not None:
+                    response = await fallback.ainvoke(messages)
                 else:
-                    raise RuntimeError("Gemini quota exceeded and Groq fallback is not configured.") from exc
+                    raise RuntimeError(
+                        "Groq quota exceeded and Gemini fallback is not configured."
+                    ) from exc
             else:
                 raise
+
         reply = response.content
 
-        # Persist updated history
         history.append(HumanMessage(content=message))
         history.append(AIMessage(content=reply))
         await _save_session(session_id, history)
 
-        # FIX 1 — returns "reply" not "answer"
         return {"reply": reply, "session_id": session_id}
 
     except Exception as exc:
