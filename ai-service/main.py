@@ -24,3 +24,8 @@ app.include_router(recommend.router, prefix="/api/v1")
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "EduConnect AI Service"}
+
+if __name__ == "__main__":
+    import uvicorn
+    # This prevents the RuntimeError on Windows during --reload 
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
