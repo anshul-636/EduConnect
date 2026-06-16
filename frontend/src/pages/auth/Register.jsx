@@ -40,7 +40,8 @@ const Register = () => {
 
   const handleChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
   const handleGoogle = () => { 
-    window.location.href = `http://localhost:3000/api/v1/auth/google?role=${form.role}`; 
+    const base = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+    window.location.href = `${base}/auth/google?role=${form.role}`; 
   };
 
   const handleSubmit = async e => {

@@ -37,6 +37,16 @@ class AuthService {
     const isMatch = await verifyPassword(password, user.password);
     if (!isMatch) { const err = new Error('Invalid email or password.'); err.statusCode = 401; throw err; }
 
+    // Block login if email is not verified
+    if (!user.isVerified) {
+      const err = new Error('EMAIL_NOT_VERIFIED');
+      err.statusCode = 403;
+      err.userId = user.id;
+      err.userEmail = user.email;
+      err.userName = user.name;
+      throw err;
+    }
+
     const tokenPayload = { userId: user.id, role: user.role };
     const { password: _pw, ...safeUser } = user;
 

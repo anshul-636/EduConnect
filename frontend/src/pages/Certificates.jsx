@@ -20,7 +20,8 @@ const Certificates = () => {
 
   const handleDownload = (certId) => {
     const token = localStorage.getItem('accessToken');
-    window.open('http://localhost:3000/api/v1/certificates/download/' + certId + '?token=' + token, '_blank');
+    const base = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+    window.open(base + '/certificates/download/' + certId + '?token=' + token, '_blank');
   };
 
   return (

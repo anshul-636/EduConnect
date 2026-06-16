@@ -3,8 +3,7 @@ const { generate, getMyCertificates, getByEvent, download, sendCertificatesByEma
 const { protect } = require('../middleware/auth.middleware');
 const { restrictTo } = require('../middleware/role.middleware');
 const { verifyToken } = require('../utils/jwt');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../utils/prisma');
 
 const router = Router();
 

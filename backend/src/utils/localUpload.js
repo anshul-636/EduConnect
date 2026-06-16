@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
 
 const localUpload = multer({ 
   storage, 
-  limits: { fileSize: 1024 * 1024 * 1024 } // 1GB limit
+  limits: { fileSize: 25 * 1024 * 1024 } // 25 MB limit
 });
 
 module.exports = { localUpload };

@@ -63,8 +63,9 @@ const Login = () => {
     } finally { setLoading(false); }
   };
 
-  const handleGoogle = () => { 
-    window.location.href = 'http://localhost:3000/api/v1/auth/google?role=STUDENT'; 
+  const handleGoogle = () => {
+    const base = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+    window.location.href = `${base}/auth/google?role=STUDENT`;
   };
 
   return (

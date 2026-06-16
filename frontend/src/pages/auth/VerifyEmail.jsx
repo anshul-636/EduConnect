@@ -62,7 +62,7 @@ const VerifyEmail = () => {
               <input
                 type='text'
                 value={otp}
-                onChange={e => setOtp(e.target.value.replace(/D/g, '').slice(0, 6))}
+                onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 placeholder='000000'
                 className='input text-center text-2xl tracking-widest font-bold'
                 maxLength={6}

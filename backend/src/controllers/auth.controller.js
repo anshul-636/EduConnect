@@ -71,8 +71,7 @@ const resendVerificationOTP = async (req, res) => {
   const { userId } = req.body;
   if (!userId) return res.status(400).json({ success: false, message: 'userId required.' });
   try {
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
+    const prisma = require('../utils/prisma');
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
     await otpService.sendVerificationOTP(user.id, user.email, user.name);
@@ -118,18 +117,12 @@ const deleteAccount = async (req, res) => {
 const reactivateAccount = async (req, res) => {
   try {
     const { email, password } = req.body;
-    // Verify credentials first
-    const { user } = await authService.login({ email, password }); // Note: login service should be updated to ignore isActive if specifically reactivating, or we just call reactivate directly if we trust the password check.
-    // Wait, the login service currently blocks deactive users.
-    // I'll update auth.service.js to have a 'verifyCredentials' method or similar.
+    // Use validateCredentials which skips the isActive check
+    const user = await authService.validateCredentials({ email, password });
     await authService.reactivate(user.id);
     return res.status(200).json({ success: true, message: 'Account re-activated! You can now log in.' });
-  } catch (err) { 
-    if (err.message === 'Account deactivated.') {
-       // This is expected if calling login() on a deactivated account. 
-       // We need a way to verify password WITHOUT checking isActive.
-    }
-    return res.status(401).json({ success: false, message: 'Invalid credentials.' }); 
+  } catch (err) {
+    return res.status(401).json({ success: false, message: 'Invalid credentials.' });
   }
 };
 
