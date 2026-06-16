@@ -44,14 +44,7 @@ def health():
     return {"status": "ok", "service": "EduConnect AI Service"}
 
 if __name__ == "__main__":
-    import uvicorn
-    # This prevents the RuntimeError on Windows during --reload 
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
-
-
-if __name__ == "__main__":
     import multiprocessing
     multiprocessing.freeze_support()
-
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)

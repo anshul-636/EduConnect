@@ -23,7 +23,8 @@ const Forum = () => {
   const fetchPosts = () => {
     forumService.getAll()
       .then(res => {
-        const payload = res?.data?.data ?? res?.data ?? [];
+        // Backend returns { success, items, pagination }
+        const payload = res?.items ?? res?.data ?? [];
         setPosts(Array.isArray(payload) ? payload : []);
       })
       .catch(console.error)
