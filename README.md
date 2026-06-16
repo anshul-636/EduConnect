@@ -1,486 +1,321 @@
-<p align="center">
-  <h1 align="center">🎓 EduConnect</h1>
-  <p align="center">
-    <strong>A Full-Stack AI-Powered Educational Collaboration Platform</strong>
-  </p>
-  <p align="center">
-    Connecting Students, Teachers, Schools & Administrators with Intelligent Tools
-  </p>
-  <p align="center">
-    <a href="#features">Features</a> •
-    <a href="#tech-stack">Tech Stack</a> •
-    <a href="#architecture">Architecture</a> •
-    <a href="#getting-started">Getting Started</a> •
-    <a href="#api-reference">API Reference</a> •
-    <a href="#screenshots">Screenshots</a>
-  </p>
-</p>
+<div align="center">
+
+# 🎓 EduConnect
+
+### A full-stack AI-powered school management platform
+
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactjs.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-Python-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://postgresql.org)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docker.com)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+
+</div>
 
 ---
 
-## 📖 About
+## 📌 What is EduConnect?
 
-**EduConnect** is a comprehensive educational platform that bridges the gap between students, teachers, and schools. It provides a unified space for managing academic events, sharing educational resources, fostering community discussions, and leveraging **AI-powered tools** for personalized learning.
-
-Built with a modern microservices architecture, EduConnect features:
-- **Role-Based Access Control** (Admin, School, Teacher, Student)
-- **Real-Time Notifications** via WebSockets
-- **Account Life-Cycle Management**: Temporary deactivation, permanent deletion, and instant re-activation
-- **Premium AI Experience**: Markdown-rich chat, in-chat PDF uploads, and Expert Planning (Elite Strategy Consultant Persona)
-- **Automated Certificate Generation** with PDFKit
-- **Secure Authentication** via JWT + Google OAuth 2.0
+EduConnect is a production-grade school management system that goes beyond typical CRUD — it's a **3-service architecture** combining a REST API, a React frontend, and a dedicated Python AI microservice. Schools can manage classes, attendance, assignments, announcements, and events, while students get an intelligent study assistant, personalised recommendations, and a real-time notification feed.
 
 ---
 
 ## ✨ Features
 
-### 🏫 School Management
-- Register and manage school profiles with logos, affiliations (CBSE, ICSE, State Board), and locations
-- School administrators can manage members, events, and resources
-- Campus directory with search and detailed school profiles
+### 🏫 Core Platform
+| Feature | Description |
+|---|---|
+| **4 Role System** | Admin, School, Teacher, Student — each with their own dashboard and permissions |
+| **Auth Suite** | JWT access/refresh tokens, Google OAuth, OTP email verification, forgot password |
+| **School Management** | School registration, admin-provisioned accounts, member management |
+| **Class Management** | Multi-section classes, enrolment, timetables |
+| **Announcements** | Role-targeted announcements with real-time delivery via WebSocket |
 
-### 📅 Event Management (Institutional Control)
-- **Advanced Lifecycle**: Manage event visibility through `DRAFT`, `PUBLISHED`, `OPEN`, `ONGOING`, and `COMPLETED` states
-- **Privacy Enforcement**: `DRAFT` events are strictly invisible to students, allowing schools to prepare in private
-- **Coming Soon Mode**: Use `PUBLISHED` state to list events as "Upcoming" without opening registrations
-- **Quick Status Toggle**: Institutional-grade management panel for instant state transitions (e.g., Revert to Draft, Publish)
-- **Team-based registration**: Configurable team sizes with member validation
-- **Automated workflows**: Integrated rank calculation, leaderboard sync, and certificate dispatch
+### 📚 Academic
+| Feature | Description |
+|---|---|
+| **Assignments** | Create, submit, and grade assignments with file attachments |
+| **Attendance** | Daily marking (click-to-cycle), bulk mark-all, monthly report, heatmap calendar |
+| **Leaderboard** | Per-event rankings with score tracking |
+| **Certificates** | Issue and download achievement certificates |
+| **Resources** | Upload study materials with view count, upvotes, and type filtering |
+| **Forum** | Threaded discussion board with inline edit and delete for posts and replies |
 
-### 📚 Resource Library
-- Upload and share educational resources (PDFs, Videos, Links, Notes)
-- Categorize by subject, topic, and difficulty level (Beginner → Advanced)
-- Cloud storage via **Cloudinary** for file management
-- Upvote system and view count tracking
-- AI-powered semantic search through vectorized resources (ChromaDB)
-- **Universal Uploads**: Students, Teachers, and Schools can now upload PDF context directly through the chat.
+### 🤖 AI Suite (Python / FastAPI)
+| Feature | Description |
+|---|---|
+| **RAG Chatbot** | School knowledge base assistant powered by ChromaDB vector search |
+| **Study Planner** | Generates a personalised weekly study plan from topic input |
+| **Recommendations** | Suggests relevant resources and events based on user history |
+| **Embeddings** | Automatic content embedding for semantic search |
 
-### 💬 Community Forum
-- Threaded discussion forum linked to events
-- Create posts, reply with nested threads
-- Event-specific discussion channels
+### 📊 Dashboards & Analytics
+| Dashboard | Highlights |
+|---|---|
+| **Student** | Assignment breakdown (pending/submitted/overdue), attendance donut with status badge, monthly attendance bar chart, event score trend |
+| **Teacher** | Grading pipeline progress bar, per-class submission rate chart, top resources by views |
+| **School** | Participation trend area chart, event status donut, student & teacher counts |
+| **Admin** | Platform-wide stats, users-by-role bar chart, recently joined schools |
 
-### 🏆 Leaderboard & Certificates
-- Real-time student rankings by score across events
-- School-level and event-level leaderboards
-- **High-Performance Auto-Dispatch**: Parallel concurrent processing for generating and mailing PDF certificates (Participation, Winner, Runner-Up) in one click
-
-### 🤖 AI-Powered Features
-| Feature | Description | Technology |
-|---------|-------------|------------|
-| **Study Assistant** | Markdown-rich chat with 📎 PDF upload & RAG | Gemini 1.5 Pro + ChromaDB |
-| **Platform Bot** | Professional navigator with institutional insights | Gemini + LangChain |
-| **Study Planner** | Expert daily roadmaps with Markdown tables & Print | LangGraph Agents |
-| **Smart Recommendations** | Intelligent resource suggestions for all roles | Sentence Transformers |
-
-### 🔐 Authentication & Security
-- **JWT-based authentication** with access & refresh tokens
-- **Google OAuth 2.0** with secure role persistence (School, Admin, Teacher, or Student)
-- **Account Settings**: Premium dashboard for deactivation (Soft Disable) and irreversible account deletion (Data Purge)
-- **Instant Re-activation**: One-click profile restoration for recently disabled accounts
-- **Email verification** with OTP
-- **Password reset** flow via email
-- Role-based route protection on both frontend and backend
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-| Technology | Purpose |
-|-----------|---------|
-| [React 18](https://react.dev/) | UI Framework |
-| [Vite](https://vitejs.dev/) | Build Tool & Dev Server |
-| [TailwindCSS](https://tailwindcss.com/) | Utility-First CSS |
-| [Zustand](https://zustand-demo.pmnd.rs/) | Lightweight State Management |
-| [React Router v6](https://reactrouter.com/) | Client-Side Routing |
-| [Axios](https://axios-http.com/) | HTTP Client |
-
-### Backend
-| Technology | Purpose |
-|-----------|---------|
-| [Express.js](https://expressjs.com/) | Web Server Framework |
-| [Prisma ORM](https://www.prisma.io/) | Database ORM & Schema Management |
-| [PostgreSQL](https://www.postgresql.org/) | Relational Database |
-| [Passport.js](http://www.passportjs.org/) | Authentication Middleware |
-| [JSON Web Tokens](https://jwt.io/) | Stateless Auth Tokens |
-| [Cloudinary](https://cloudinary.com/) | Cloud Media Storage |
-| [PDFKit](https://pdfkit.org/) | PDF Certificate Generation |
-| [Nodemailer](https://nodemailer.com/) | Email Delivery |
-| [WebSocket (ws)](https://github.com/websockets/ws) | Real-Time Communication |
-
-### AI Service
-| Technology | Purpose |
-|-----------|---------|
-| [FastAPI](https://fastapi.tiangolo.com/) | High-Performance Python API |
-| [LangChain](https://www.langchain.com/) | LLM Orchestration Framework |
-| [LangGraph](https://langchain-ai.github.io/langgraph/) | Stateful AI Agent Workflows |
-| [Google Gemini](https://ai.google.dev/) | Large Language Model |
-| [ChromaDB](https://www.trychroma.com/) | Vector Database for RAG |
-| [Sentence Transformers](https://www.sbert.net/) | Text Embeddings |
-| [PyMuPDF](https://pymupdf.readthedocs.io/) | PDF Text Extraction |
-
-### DevOps
-| Technology | Purpose |
-|-----------|---------|
-| [Docker Compose](https://docs.docker.com/compose/) | Container Orchestration |
-| [PostgreSQL 15 Alpine](https://hub.docker.com/_/postgres) | Containerized Database |
-| [Redis 7 Alpine](https://hub.docker.com/_/redis) | Caching Layer |
+### ⚡ Real-time
+- WebSocket notification feed — live bell updates without polling
+- Per-class announcements pushed instantly to enrolled users
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     EduConnect Platform                       │
-├──────────────┬──────────────────┬────────────────────────────┤
-│   Frontend   │     Backend      │        AI Service           │
-│   (React)    │   (Express.js)   │        (FastAPI)            │
-│   Port 5173  │    Port 3000     │        Port 8001            │
-├──────────────┴──────────────────┴────────────────────────────┤
-│                                                               │
-│  ┌──────────┐  ┌──────────────┐  ┌─────────────────────────┐ │
-│  │  Vite    │  │  REST API    │  │  /api/v1/chat           │ │
-│  │  Proxy   │──│  + WebSocket │  │  /api/v1/embed          │ │
-│  │  Config  │  │  Server      │──│  /api/v1/planner        │ │
-│  └──────────┘  └──────┬───────┘  │  /api/v1/recommend      │ │
-│                        │         └───────────┬─────────────┘ │
-│                        │                     │               │
-│                ┌───────▼───────┐     ┌───────▼──────┐        │
-│                │  PostgreSQL   │     │   ChromaDB   │        │
-│                │  (Secure Purge) │     │  (Vectors)   │        │
-│                └───────────────┘     └──────────────┘        │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                     Browser / Mobile                      │
+│                  React 18 + Vite + Tailwind               │
+└─────────────────────────┬────────────────────────────────┘
+                          │ REST + WebSocket
+┌─────────────────────────▼────────────────────────────────┐
+│                   Node.js / Express API                   │
+│         Prisma ORM · JWT · Multer · Nodemailer            │
+│                     :3000                                 │
+└──────────┬──────────────────────────────┬────────────────┘
+           │ SQL                          │ HTTP (internal)
+┌──────────▼──────────┐       ┌───────────▼───────────────┐
+│    PostgreSQL 15     │       │   Python FastAPI           │
+│    (primary store)  │       │   AI Microservice          │
+└─────────────────────┘       │   ChromaDB · LangChain     │
+                               │   :8000                    │
+┌─────────────────────┐       └───────────────────────────┘
+│    Redis            │
+│  (OTP · sessions)   │
+└─────────────────────┘
 ```
 
----
-
-## 📁 Project Structure
+### Directory Structure
 
 ```
-educonnect/
-├── frontend/                    # React + Vite Frontend
-│   ├── src/
-│   │   ├── components/          # Reusable UI components
-│   │   │   ├── ai/              # AI chat interface components
-│   │   │   └── common/          # Layout, Navbar, Loader
-│   │   ├── hooks/               # Custom React hooks (WebSocket)
-│   │   ├── pages/               # Application pages
-│   │   │   ├── auth/            # Login, Register, OAuth, Password Reset
-│   │   │   ├── dashboard/       # Role-specific dashboards
-│   │   │   └── ai/              # AI-powered feature pages
-│   │   ├── routes/              # Protected & role-based route guards
-│   │   ├── services/            # API integration layer
-│   │   └── store/               # Zustand state management
-│   ├── tailwind.config.js
-│   └── vite.config.js
-│
-├── backend/                     # Express.js Backend
-│   ├── prisma/
-│   │   └── schema.prisma        # Database schema (10 models)
+EduConnect/
+├── frontend/               # React 18 + Vite + Tailwind
 │   └── src/
-│       ├── controllers/         # Request handlers
-│       ├── middleware/           # Auth & RBAC guards
-│       ├── routes/              # API route definitions
-│       ├── services/            # Business logic layer
-│       ├── utils/               # Utilities (JWT, email, cloud storage)
-│       └── index.js             # Server entry point
+│       ├── pages/          # Route-level page components
+│       ├── components/     # Shared UI (Layout, Loader, etc.)
+│       ├── services/       # Axios API service modules
+│       ├── store/          # Zustand auth store
+│       └── hooks/          # useWebSocket, custom hooks
 │
-├── ai-service/                  # FastAPI AI Microservice
-│   ├── app/
-│   │   ├── agents/              # LangGraph study planner agents
-│   │   │   └── study_planner/   # State, nodes, and graph definition
-│   │   ├── core/                # Config & database connections
-│   │   ├── routers/             # API endpoints (chat, embed, planner)
-│   │   └── services/            # RAG, ingestion, platform bot
-│   ├── main.py                  # FastAPI app entry point
-│   └── requirements.txt
+├── backend/                # Node.js + Express REST API
+│   └── src/
+│       ├── routes/         # Express routers (one per domain)
+│       ├── controllers/    # Request handlers
+│       ├── services/       # Business logic
+│       ├── middleware/     # auth, error, upload
+│       └── utils/          # prisma, redis, websocket, email
 │
-├── docker-compose.yml           # PostgreSQL + Redis containers
-└── .gitignore
+├── ai-service/             # Python FastAPI microservice
+│   └── app/
+│       ├── routers/        # chat, planner, recommend, embed
+│       └── core/           # ChromaDB client, LLM config
+│
+├── docker-compose.yml      # Full stack orchestration
+└── README.md
 ```
 
 ---
-
-## 📊 Database Schema
-
-The application uses **10 interconnected models** managed by Prisma ORM:
-
-```mermaid
-erDiagram
-    School
-    User
-    Event
-    Resource
-    Registration
-    ForumPost
-    Certificate
-    ChatSession
-    StudyPlan
-    Leaderboard
-
-    School ||--o{ User : has_members
-    School ||--o{ Event : hosts
-    School ||--o{ Resource : manages
-
-    User ||--o{ Registration : registers
-    User ||--o{ Resource : uploads
-    User ||--o{ ForumPost : authors
-    User ||--o{ Certificate : earns
-    User ||--o{ ChatSession : creates
-    User ||--o{ StudyPlan : receives
-
-    Event ||--o{ Registration : accepts
-    Event ||--o{ Leaderboard : tracks
-    Event ||--o{ Certificate : awards
-    Event ||--o{ ForumPost : discusses
-
-    Resource ||--o{ ChatSession : references
-```
-
-
-### User Roles
-
-| Role | Capabilities |
-|------|-------------|
-| **ADMIN** | Full platform management, user oversight |
-| **SCHOOL** | Create events, manage members, upload resources, issue certificates |
-| **TEACHER** | Upload resources, participate in forums, manage students |
-| **STUDENT** | Register for events, access resources, earn certificates, use AI tools |
-
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Node.js** ≥ 18.x — [Download](https://nodejs.org/)
-- **Python** ≥ 3.10 — [Download](https://www.python.org/)
-- **PostgreSQL** ≥ 15 — [Download](https://www.postgresql.org/) or use Docker
-- **Docker** (Optional) — [Download](https://www.docker.com/)
+- Node.js 18+
+- Python 3.10+
+- PostgreSQL 15
+- Redis 7
+- Docker & Docker Compose (optional but recommended)
 
-### 1. Clone the Repository
+---
+
+### Option A — Docker Compose (Recommended)
 
 ```bash
-git clone https://github.com/anshul-636/EduConnect.git
+# 1. Clone
+git clone https://github.com/your-username/EduConnect.git
 cd EduConnect
+
+# 2. Environment files
+cp backend/.env.example backend/.env
+cp ai-service/.env.example ai-service/.env
+# Edit both files with your keys (see Environment Variables below)
+
+# 3. Start everything
+docker compose up --build
+
+# 4. Run database migrations (first time only)
+docker exec -it educonnect_backend npx prisma migrate deploy
 ```
 
-### 2. Start the Database (Docker)
+The app will be available at `http://localhost:5173` (frontend) and `http://localhost:3000` (API).
 
-```bash
-docker-compose up -d
-```
+---
 
-This spins up:
-- **PostgreSQL** on port `5433`
-- **Redis** on port `6380`
+### Option B — Manual Setup
 
-### 3. Setup the Backend
+#### 1. Backend
 
 ```bash
 cd backend
 npm install
-```
 
-Create a `.env` file by copying the example:
-
-```bash
+# Set up environment
 cp .env.example .env
-```
+# Edit .env with your DATABASE_URL, JWT_SECRET, etc.
 
-Update the `.env` with your credentials:
+# Run migrations & generate Prisma client
+npx prisma migrate dev
+npx prisma generate
 
-```env
-DATABASE_URL=postgresql://postgres:password@localhost:5433/educonnect
-JWT_SECRET=your-super-secret-key
-PORT=3000
-
-# Cloudinary (for file uploads)
-CLOUDINARY_CLOUD_NAME=your-cloud-name
-CLOUDINARY_API_KEY=your-api-key
-CLOUDINARY_API_SECRET=your-api-secret
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_CALLBACK_URL=http://localhost:3000/api/v1/auth/google/callback
-```
-
-Push the database schema and start the server:
-
-```bash
-npm run db:push
+# Start dev server
 npm run dev
 ```
 
-The backend will be running on **http://localhost:3000**
-
-### 4. Setup the Frontend
+#### 2. Frontend
 
 ```bash
-cd ../frontend
+cd frontend
 npm install
+
+# Create .env
+echo "VITE_API_URL=http://localhost:3000/api/v1" > .env
+
+# Start dev server
 npm run dev
 ```
 
-The frontend will be running on **http://localhost:5173**
-
-### 5. Setup the AI Service
+#### 3. AI Service
 
 ```bash
-cd ../ai-service
+cd ai-service
 python -m venv venv
-
-# Windows
-./venv/Scripts/activate
-
-# macOS/Linux
-source venv/bin/activate
+source venv/bin/activate   # Windows: venv\Scripts\activate
 
 pip install -r requirements.txt
+
+# Create .env
+cp .env.example .env
+# Set NODE_BACKEND_URL=http://localhost:3000
+
+uvicorn main:app --reload --port 8000
 ```
-
-Create a `.env` file:
-
-```env
-GEMINI_API_KEY=your-gemini-api-key
-CHROMA_PERSIST_DIR=./chroma_db
-```
-
-Start the AI service:
-
-```bash
-uvicorn main:app --reload --port 8001
-```
-
-The AI service will be running on **http://localhost:8001**
 
 ---
 
-## 📡 API Reference
+## 🔐 Environment Variables
 
-### Authentication Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/v1/auth/register` | Register a new user |
-| `POST` | `/api/v1/auth/login` | Login with email & password |
-| `POST` | `/api/v1/auth/verify-email` | Verify email with OTP |
-| `POST` | `/api/v1/auth/forgot-password` | Request password reset |
-| `POST` | `/api/v1/auth/reset-password` | Reset password with OTP |
-| `GET` | `/api/v1/auth/google` | Initiate Google OAuth (with `role` param) |
-| `GET` | `/api/v1/auth/google/callback` | Google OAuth callback |
-| `POST` | `/api/v1/auth/deactivate` | Temporarily disable account |
-| `DELETE` | `/api/v1/auth/delete-me` | Permanently delete account & data |
-| `POST` | `/api/v1/auth/reactivate` | Securely restore a disabled account |
-
-### Event Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/v1/events` | List all events |
-| `POST` | `/api/v1/events` | Create a new event (School only) |
-| `GET` | `/api/v1/events/:id` | Get event details (includes `adminId` for owner verification) |
-| `POST` | `/api/v1/events/:id/register` | Register for an event (Only allowed if status is `OPEN`) |
-| `PUT` | `/api/v1/events/:id` | Update event details or status (e.g., Draft → Open) |
-
-### Resource Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/v1/resources` | List all resources |
-| `POST` | `/api/v1/resources` | Upload a resource (All Roles authorized) |
-| `GET` | `/api/v1/resources/:id` | Get resource details |
-
-### AI Service Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/v1/chat` | Chat with AI study assistant |
-| `POST` | `/api/v1/embed` | Embed a document into ChromaDB |
-| `POST` | `/api/v1/planner` | Generate a personalized study plan |
-| `POST` | `/api/v1/recommend` | Get resource recommendations |
-| `GET` | `/health` | Health check endpoint |
-
----
-
-## 🔧 Environment Variables
-
-### Backend (`backend/.env`)
+### `backend/.env`
 
 | Variable | Description | Required |
-|----------|-------------|----------|
+|---|---|---|
 | `DATABASE_URL` | PostgreSQL connection string | ✅ |
-| `JWT_SECRET` | Secret key for JWT signing | ✅ |
-| `PORT` | Server port (default: 3000) | ✅ |
-| `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | ✅ |
-| `CLOUDINARY_API_KEY` | Cloudinary API key | ✅ |
-| `CLOUDINARY_API_SECRET` | Cloudinary API secret | ✅ |
-| `GOOGLE_CLIENT_ID` | Google OAuth client ID | ⬜ |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret | ⬜ |
-| `SENDGRID_API_KEY` | SendGrid email API key | ⬜ |
+| `JWT_SECRET` | Random 32-byte hex string | ✅ |
+| `JWT_ACCESS_EXPIRES` | e.g. `30m` | ✅ |
+| `JWT_REFRESH_EXPIRES` | e.g. `7d` | ✅ |
+| `PORT` | Backend port (default `3000`) | ✅ |
+| `REDIS_URL` | Redis connection URL | ✅ |
+| `AI_SERVICE_URL` | URL of the Python AI service | ✅ |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID | Optional |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth secret | Optional |
+| `GOOGLE_CALLBACK_URL` | e.g. `http://localhost:3000/api/v1/auth/google/callback` | Optional |
+| `SENDGRID_API_KEY` | For OTP & notification emails | Optional |
+| `FROM_EMAIL` | Sender email address | Optional |
+| `CLOUDINARY_CLOUD_NAME` | For file uploads | Optional |
+| `CLOUDINARY_API_KEY` | Cloudinary key | Optional |
+| `CLOUDINARY_API_SECRET` | Cloudinary secret | Optional |
 
-### AI Service (`ai-service/.env`)
+### `frontend/.env`
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `GEMINI_API_KEY` | Google Gemini API key | ✅ |
-| `CHROMA_PERSIST_DIR` | ChromaDB storage path | ✅ |
+| Variable | Description |
+|---|---|
+| `VITE_API_URL` | Backend API base URL — e.g. `http://localhost:3000/api/v1` |
 
----
+### `ai-service/.env`
 
-## 🧪 Running Tests
-
-```bash
-# Backend
-cd backend
-npm test
-
-# Frontend
-cd frontend
-npm run build   # Validates the production build
-```
+| Variable | Description |
+|---|---|
+| `NODE_BACKEND_URL` | Backend URL for internal calls — e.g. `http://localhost:3000` |
+| `OPENAI_API_KEY` | OpenAI key for LLM features |
 
 ---
 
-## 🐳 Docker Deployment
+## 🗄️ Database Schema
 
-To run the full infrastructure stack:
+Core models: `User`, `School`, `Class`, `ClassEnrollment`, `Assignment`, `Submission`, `Attendance`, `Event`, `Registration`, `Resource`, `Leaderboard`, `Certificate`, `ForumPost`, `Announcement`, `Notification`, `TimetableSlot`, `StudyPlan`, `ChatSession`, `OTP`
 
-```bash
-# Start PostgreSQL and Redis
-docker-compose up -d
+Run `npx prisma studio` to browse the database in a GUI.
 
-# Verify containers are running
-docker ps
-```
+---
+
+## 📡 API Overview
+
+Base URL: `/api/v1`
+
+| Prefix | Domain |
+|---|---|
+| `/auth` | Register, login, OTP, Google OAuth, refresh, logout |
+| `/schools` | CRUD for schools, admin-create |
+| `/classes` | Class management, enrolment, timetable |
+| `/assignments` | Create, submit, grade, list |
+| `/attendance` | Mark bulk, get by date, monthly report |
+| `/events` | Event CRUD, registration |
+| `/resources` | Upload, view, upvote |
+| `/forum` | Posts, replies, edit, delete |
+| `/announcements` | Create and list announcements |
+| `/notifications` | List, mark read |
+| `/leaderboard` | Rankings per event |
+| `/certificates` | Issue, list, download |
+| `/dashboard` | Role-aware summary with analytics |
+| `/ai` | Proxy to Python AI service (chat, planner, recommend) |
+
+Full Postman collection: `backend/EduConnect.postman_collection.json` *(if included)*
+
+---
+
+## 🧑‍💻 User Roles
+
+| Role | What they can do |
+|---|---|
+| **ADMIN** | Platform oversight, create schools, view all data |
+| **SCHOOL** | Manage their school, create events, issue certificates, post announcements |
+| **TEACHER** | Manage classes, mark attendance, create assignments, grade submissions, upload resources |
+| **STUDENT** | Enrol in classes, submit assignments, register for events, use AI assistant |
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, Vite, Tailwind CSS, Zustand, Recharts, React Router v6, Lucide Icons |
+| Backend | Node.js, Express, Prisma ORM, PostgreSQL, Redis, Passport.js (Google OAuth), JWT, Multer |
+| AI Service | Python, FastAPI, LangChain, ChromaDB, OpenAI API |
+| DevOps | Docker, Docker Compose |
+| Email | SendGrid (OTP, notifications) |
+| File Storage | Cloudinary (or local fallback) |
 
 ---
 
 ## 🤝 Contributing
 
-1. **Fork** the repository
-2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
-3. **Commit** your changes: `git commit -m "feat: add amazing feature"`
-4. **Push** to the branch: `git push origin feature/amazing-feature`
-5. **Open** a Pull Request
+1. Fork the repository
+2. Create your feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -m 'Add your feature'`
+4. Push to the branch: `git push origin feature/your-feature`
+5. Open a Pull Request
 
 ---
 
 ## 📄 License
 
-This project is open source and available under the [MIT License](LICENSE).
+MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-## 👤 Author
-
-**Anshul**
-- GitHub: [@anshul-636](https://github.com/anshul-636)
-
----
-
-<p align="center">
-  Made with ❤️ for the future of education
-</p>
+<div align="center">
+  Built with ❤️ as a portfolio project · EduConnect 2025
+</div>
