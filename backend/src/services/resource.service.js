@@ -1,13 +1,22 @@
+/**
+ * resource.service.js
+ *
+ * FIXES:
+ *  • getById() — auto-increments viewCount on every fetch
+ *  • upvote()  — per-user idempotent (uses ResourceUpvote join table)
+ *  • getAll()  — supports pagination (?page=1&limit=20)
+ */
+
 const prisma = require('../utils/prisma');
-const { cloudinary } = require('../utils/cloudinary');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
 class ResourceService {
   async create(data, file, userId) {
-    // Generate a URL pointing to the local backend /uploads endpoint
-    const fileUrl = file ? `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/${file.filename}` : (data.fileUrl || null);
+    const fileUrl = file
+      ? `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/${file.filename}`
+      : data.fileUrl || null;
 
     const resource = await prisma.resource.create({
       data: {
@@ -29,7 +38,9 @@ class ResourceService {
         const filePath = path.join(__dirname, '../../uploads', file.filename);
         const FormData = require('form-data');
         const form = new FormData();
-        form.append('file', fs.createReadStream(filePath), { filename: file.originalname || file.filename });
+        form.append('file', fs.createReadStream(filePath), {
+          filename: file.originalname || file.filename,
+        });
         form.append('resource_id', resource.id);
         form.append('title', resource.title);
 
@@ -38,7 +49,7 @@ class ResourceService {
           headers: form.getHeaders(),
           timeout: 30000,
         });
-        console.log(`✅ Auto-embedded resource "${resource.title}" into ChromaDB`);
+        console.log(`✅ Auto-embedded "${resource.title}" into ChromaDB`);
       } catch (e) {
         console.error(`⚠️ Auto-embed failed for "${resource.title}":`, e.message);
       }
@@ -49,74 +60,153 @@ class ResourceService {
 
   async getAll(filters = {}) {
     const where = {};
-    if (filters.subject) where.subject = { contains: filters.subject, mode: 'insensitive' };
+    if (filters.subject)
+      where.subject = { contains: filters.subject, mode: 'insensitive' };
     if (filters.type) where.type = filters.type;
     if (filters.difficulty) where.difficulty = filters.difficulty;
-    if (filters.search) where.title = { contains: filters.search, mode: 'insensitive' };
-    return prisma.resource.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        uploader: { select: { id: true, name: true, role: true } },
-        school: { select: { id: true, name: true } },
+    if (filters.search)
+      where.OR = [
+        { title: { contains: filters.search, mode: 'insensitive' } },
+        { description: { contains: filters.search, mode: 'insensitive' } },
+        { topic: { contains: filters.search, mode: 'insensitive' } },
+      ];
+
+    // Pagination
+    const page = Math.max(1, parseInt(filters.page) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(filters.limit) || 20));
+    const skip = (page - 1) * limit;
+
+    const [items, total] = await Promise.all([
+      prisma.resource.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          uploader: { select: { id: true, name: true, role: true } },
+          school: { select: { id: true, name: true } },
+          _count: { select: { upvoteRecords: true } },
+        },
+      }),
+      prisma.resource.count({ where }),
+    ]);
+
+    return {
+      items,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page * limit < total,
+        hasPrev: page > 1,
       },
-    });
+    };
   }
 
+  /**
+   * FIXED: auto-increments viewCount on every call.
+   * Uses update() so it's atomic and returns the updated row.
+   */
   async getById(id) {
-    const resource = await prisma.resource.findUnique({
+    const resource = await prisma.resource.update({
       where: { id },
+      data: { viewCount: { increment: 1 } },
       include: {
         uploader: { select: { id: true, name: true, role: true } },
         school: { select: { id: true, name: true } },
+        _count: { select: { upvoteRecords: true } },
       },
     });
-    if (!resource) { const err = new Error('Resource not found.'); err.statusCode = 404; throw err; }
+    // Prisma throws P2025 if not found — catch upstream
     return resource;
   }
 
-  async incrementViewCount(id) {
+  /**
+   * FIXED: Per-user upvote with idempotency.
+   * Returns { upvoted: true/false, upvotes: N }
+   */
+  async upvote(id, userId) {
     const resource = await prisma.resource.findUnique({ where: { id } });
-    if (!resource) { const err = new Error('Resource not found.'); err.statusCode = 404; throw err; }
-    return prisma.resource.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+    if (!resource) {
+      const err = new Error('Resource not found.');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    // Check if user already upvoted
+    const existing = await prisma.resourceUpvote.findUnique({
+      where: { userId_resourceId: { userId, resourceId: id } },
+    });
+
+    if (existing) {
+      // Toggle off — remove upvote
+      await prisma.$transaction([
+        prisma.resourceUpvote.delete({ where: { id: existing.id } }),
+        prisma.resource.update({
+          where: { id },
+          data: { upvotes: { decrement: 1 } },
+        }),
+      ]);
+
+      const updated = await prisma.resource.findUnique({
+        where: { id },
+        include: { uploader: { select: { id: true, name: true, role: true } } },
+      });
+      return { upvoted: false, upvotes: updated.upvotes, resource: updated };
+    } else {
+      // Add upvote
+      await prisma.$transaction([
+        prisma.resourceUpvote.create({ data: { userId, resourceId: id } }),
+        prisma.resource.update({
+          where: { id },
+          data: { upvotes: { increment: 1 } },
+        }),
+      ]);
+
+      const updated = await prisma.resource.findUnique({
+        where: { id },
+        include: { uploader: { select: { id: true, name: true, role: true } } },
+      });
+      return { upvoted: true, upvotes: updated.upvotes, resource: updated };
+    }
   }
 
+  /** Check if a user has upvoted a resource */
+  async hasUpvoted(id, userId) {
+    const existing = await prisma.resourceUpvote.findUnique({
+      where: { userId_resourceId: { userId, resourceId: id } },
+    });
+    return !!existing;
+  }
 
   async delete(id, userId) {
     const resource = await prisma.resource.findUnique({ where: { id } });
-    if (!resource) { const err = new Error('Resource not found.'); err.statusCode = 404; throw err; }
-    
+    if (!resource) {
+      const err = new Error('Resource not found.');
+      err.statusCode = 404;
+      throw err;
+    }
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (resource.uploadedBy !== userId && user?.role !== 'ADMIN') {
-      const err = new Error('You can only delete your own resources.'); err.statusCode = 403; throw err;
+      const err = new Error('You can only delete your own resources.');
+      err.statusCode = 403;
+      throw err;
     }
+
     if (resource.fileUrl && resource.fileUrl.includes('/uploads/')) {
       try {
-        const fs = require('fs');
-        const path = require('path');
         const filename = resource.fileUrl.split('/uploads/')[1];
         const filePath = path.join(__dirname, '../../uploads', filename);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      } catch (e) { console.error('Local file delete error:', e); }
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      } catch (e) {
+        console.error('Local file delete error:', e);
+      }
     }
+
     return prisma.resource.delete({ where: { id } });
   }
-
-  async upvote(id) {
-    const resource = await prisma.resource.findUnique({ where: { id } });
-    if (!resource) { const err = new Error('Resource not found.'); err.statusCode = 404; throw err; }
-    return prisma.resource.update({ 
-      where: { id }, 
-      data: { upvotes: { increment: 1 } },
-      include: {
-        uploader: { select: { id: true, name: true, role: true } },
-        school: { select: { id: true, name: true } },
-      },
-    });
-  }
-
 }
 
 module.exports = new ResourceService();

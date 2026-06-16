@@ -1,54 +1,94 @@
-const WebSocket = require('ws');
-const leaderboardService = require('../services/leaderboard.service');
+/**
+ * websocket.js — Updated with per-user broadcast support.
+ *
+ * ADDED: broadcastToUser(userId, payload) — sends a message to all
+ *        WebSocket connections belonging to a specific user.
+ *        Used by notificationService for instant in-app notifications.
+ *
+ * EXISTING: leaderboard broadcast unchanged.
+ */
 
-// Map of eventId -> Set of connected clients
-const rooms = new Map();
+const WebSocket = require('ws');
+
+let wss = null;
+
+// Map: userId → Set of WebSocket connections
+const userConnections = new Map();
 
 function setupWebSocket(server) {
-  const wss = new WebSocket.Server({ server, path: '/ws/leaderboard' });
+  wss = new WebSocket.Server({ server, path: '/ws' });
 
   wss.on('connection', (ws, req) => {
-    // Extract eventId from URL: /ws/leaderboard?eventId=xxx
-    const url = new URL(req.url, 'http://localhost');
-    const eventId = url.searchParams.get('eventId');
+    // Client must send { type: 'auth', userId: '...' } as first message
+    ws.userId = null;
 
-    if (!eventId) { ws.close(); return; }
+    ws.on('message', (raw) => {
+      try {
+        const msg = JSON.parse(raw);
 
-    // Join room
-    if (!rooms.has(eventId)) rooms.set(eventId, new Set());
-    rooms.get(eventId).add(ws);
-    console.log('WS client joined event:', eventId, '| clients:', rooms.get(eventId).size);
+        if (msg.type === 'auth' && msg.userId) {
+          ws.userId = msg.userId;
 
-    // Send current leaderboard on connect
-    leaderboardService.getByEvent(eventId).then(data => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'LEADERBOARD_UPDATE', data }));
-      }
-    }).catch(console.error);
+          if (!userConnections.has(msg.userId)) {
+            userConnections.set(msg.userId, new Set());
+          }
+          userConnections.get(msg.userId).add(ws);
+
+          ws.send(JSON.stringify({ type: 'auth_ok', userId: msg.userId }));
+        }
+
+        // Leaderboard subscription (existing)
+        if (msg.type === 'subscribe_leaderboard') {
+          ws.subscribedLeaderboard = true;
+        }
+      } catch (_) {}
+    });
 
     ws.on('close', () => {
-      if (rooms.has(eventId)) {
-        rooms.get(eventId).delete(ws);
-        if (rooms.get(eventId).size === 0) rooms.delete(eventId);
+      if (ws.userId && userConnections.has(ws.userId)) {
+        userConnections.get(ws.userId).delete(ws);
+        if (userConnections.get(ws.userId).size === 0) {
+          userConnections.delete(ws.userId);
+        }
       }
     });
 
-    ws.on('error', console.error);
+    ws.on('error', (err) => {
+      console.error('[WS error]', err.message);
+    });
   });
 
-  return wss;
+  console.log('🔌 WebSocket server ready at /ws');
 }
 
-// Broadcast updated leaderboard to all clients in a room
-async function broadcastLeaderboard(eventId) {
-  if (!rooms.has(eventId)) return;
-  try {
-    const data = await leaderboardService.getByEvent(eventId);
-    const msg = JSON.stringify({ type: 'LEADERBOARD_UPDATE', data });
-    rooms.get(eventId).forEach(client => {
-      if (client.readyState === WebSocket.OPEN) client.send(msg);
-    });
-  } catch (err) { console.error('Broadcast error:', err); }
+/** Broadcast leaderboard update to all subscribed clients (existing behaviour). */
+function broadcastLeaderboardUpdate(data) {
+  if (!wss) return;
+  const msg = JSON.stringify({ type: 'leaderboard_update', data });
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN && client.subscribedLeaderboard) {
+      client.send(msg);
+    }
+  });
 }
 
-module.exports = { setupWebSocket, broadcastLeaderboard };
+/**
+ * NEW: Send a message to all WebSocket connections owned by a specific user.
+ * Used by notificationService for real-time notification delivery.
+ *
+ * @param {string} userId
+ * @param {{ event: string, payload: any }} message
+ */
+function broadcastToUser(userId, message) {
+  const connections = userConnections.get(userId);
+  if (!connections || connections.size === 0) return; // User not connected
+
+  const msg = JSON.stringify(message);
+  connections.forEach((ws) => {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(msg);
+    }
+  });
+}
+
+module.exports = { setupWebSocket, broadcastLeaderboardUpdate, broadcastToUser };

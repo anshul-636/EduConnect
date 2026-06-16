@@ -3,7 +3,7 @@ const { protect } = require('../middleware/auth.middleware');
 const router = Router();
 const axios = require('axios');
 
-const AI_URL = process.env.AI_SERVICE_URL || 'http://localhost:8001';
+const AI_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 
 // Proxy helper
 const aiProxy = async (req, res, endpoint, method = 'POST') => {

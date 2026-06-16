@@ -40,13 +40,14 @@ const Register = () => {
 
   const handleChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
   const handleGoogle = () => { 
-    window.location.href = `http://localhost:3000/api/v1/auth/google?role=${form.role}`; 
+    const base = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+    window.location.href = `${base}/auth/google?role=${form.role}`; 
   };
 
   const handleSubmit = async e => {
     e.preventDefault(); setError('');
 
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(form.email)) { setError('Please enter a valid email (e.g. name@gmail.com).'); return; }
 
     let strength = 0;

@@ -93,7 +93,7 @@ const ForgotPassword = () => {
               <form onSubmit={handleResetPassword} className='space-y-4'>
                 <div>
                   <label className='block text-sm font-medium text-dark-300 mb-1.5'>6-digit OTP</label>
-                  <input type='text' value={otp} onChange={e => setOtp(e.target.value.replace(/D/g,'').slice(0,6))}
+                  <input type='text' value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g,'').slice(0,6))}
                     placeholder='000000' className='input text-center text-2xl tracking-widest font-bold' maxLength={6} required />
                 </div>
                 <div>

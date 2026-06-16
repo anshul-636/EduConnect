@@ -1,9 +1,9 @@
-// Prisma Schema — EduConnect
-// Run `npm run db:push` to sync this to PostgreSQL (no migrations needed)
+// Prisma Schema — EduConnect (v2 — full platform)
+// Run `npm run db:push` after any changes.
 
 generator client {
-  provider = "prisma-client-js"
-  engineType="binary"
+  provider   = "prisma-client-js"
+  engineType = "binary"
 }
 
 datasource db {
@@ -61,7 +61,31 @@ enum BotType {
   PLATFORM
 }
 
-// ─── MODELS ───────────────────────────────────────────────────────────────────
+enum NotificationType {
+  EVENT_REGISTERED
+  EVENT_REMINDER
+  EVENT_RESULT
+  CERTIFICATE_READY
+  ASSIGNMENT_CREATED
+  ASSIGNMENT_GRADED
+  ANNOUNCEMENT
+  FORUM_REPLY
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  GRADED
+  LATE
+  RESUBMITTED
+}
+
+// ─── CORE MODELS ──────────────────────────────────────────────────────────────
 
 model School {
   id          String    @id @default(uuid())
@@ -71,13 +95,14 @@ model School {
   logoUrl     String?
   createdAt   DateTime  @default(now())
 
-  // Relations
-  members      User[]         @relation("SchoolMembers")
-  admin        User?          @relation("SchoolAdmin", fields: [adminId], references: [id])
   adminId      String?        @unique
+  admin        User?          @relation("SchoolAdmin", fields: [adminId], references: [id])
+  members      User[]         @relation("SchoolMembers")
   events       Event[]
   resources    Resource[]
   leaderboard  Leaderboard[]
+  classes      Class[]
+  announcements Announcement[]
 }
 
 model User {
@@ -92,22 +117,48 @@ model User {
   isVerified Boolean @default(false)
   otps       OTP[]
 
-  // FK to School
   schoolId  String?
   school    School?  @relation("SchoolMembers", fields: [schoolId], references: [id])
-
-  // School admin relation (one user can be admin of one school)
   adminOf   School?  @relation("SchoolAdmin")
 
-  // Relations
+  // Event & learning
   registrations Registration[]
   resources     Resource[]
   leaderboard   Leaderboard[]
   certificates  Certificate[]
-  forumPosts    ForumPost[]
   chatSessions  ChatSession[]
   studyPlans    StudyPlan[]
+
+  // Forum
+  forumPosts    ForumPost[]
+  forumLikes    ForumLike[]
+
+  // Resource upvotes
+  resourceUpvotes ResourceUpvote[]
+
+  // Notifications
+  notifications Notification[]
+
+  // Classes (student enrolled in / teacher teaches)
+  enrollments   ClassEnrollment[]
+  teachingClasses Class[]         @relation("ClassTeacher")
+
+  // Assignments
+  createdAssignments Assignment[]   @relation("TeacherAssignments")
+  submissions        Submission[]
+
+  // Attendance
+  attendanceRecords  Attendance[]   @relation("StudentAttendance")
+  markedAttendances  Attendance[]   @relation("TeacherAttendance")
+
+  // Timetable
+  timetableSlots TimetableSlot[] @relation("TimetableTeacher")
+
+  // Announcements
+  announcements Announcement[]
 }
+
+// ─── EVENT MODELS ─────────────────────────────────────────────────────────────
 
 model Event {
   id          String        @id @default(uuid())
@@ -126,15 +177,12 @@ model Event {
   maxTeams    Int?
   teamSize    Int           @default(1)
   status      EventStatus   @default(DRAFT)
-  subjectTags String[]      // used by AI to link resources
+  subjectTags String[]
   answerKey   Json?         // [{question, answer, explanation}]
   createdAt   DateTime      @default(now())
 
-  // FK
-  schoolId    String
-  school      School        @relation(fields: [schoolId], references: [id])
-
-  // Relations
+  schoolId      String
+  school        School        @relation(fields: [schoolId], references: [id])
   registrations Registration[]
   leaderboard   Leaderboard[]
   certificates  Certificate[]
@@ -145,20 +193,22 @@ model Event {
 model Registration {
   id           String   @id @default(uuid())
   teamName     String?
-  teamMembers  Json?    @default("[]") // [{name, email, class}]
-  status       String   @default("REGISTERED") // REGISTERED | CHECKED_IN | COMPLETED
+  teamMembers  Json?    @default("[]")
+  status       String   @default("REGISTERED")
   rank         Int?
   score        Float?
+  answers      Json?    // [{question, answer}] — student's submitted answers
   registeredAt DateTime @default(now())
 
-  // FKs
   eventId   String
   event     Event  @relation(fields: [eventId], references: [id])
   studentId String
   student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@unique([eventId, studentId]) // student can register once per event
+  @@unique([eventId, studentId])
 }
+
+// ─── RESOURCE MODELS ──────────────────────────────────────────────────────────
 
 model Resource {
   id          String       @id @default(uuid())
@@ -171,18 +221,32 @@ model Resource {
   difficulty  Difficulty   @default(BEGINNER)
   upvotes     Int          @default(0)
   viewCount   Int          @default(0)
-  isEmbedded  Boolean      @default(false) // Phase 2: vectorized into ChromaDB
+  isEmbedded  Boolean      @default(false)
   createdAt   DateTime     @default(now())
 
-  // FKs
-  schoolId    String?
-  school      School?  @relation(fields: [schoolId], references: [id])
-  uploadedBy  String
-  uploader    User     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
+  schoolId   String?
+  school     School?  @relation(fields: [schoolId], references: [id])
+  uploadedBy String
+  uploader   User     @relation(fields: [uploadedBy], references: [id], onDelete: Cascade)
 
-  // Relations
-  chatSessions ChatSession[]
+  chatSessions    ChatSession[]
+  upvoteRecords   ResourceUpvote[]
+  assignments     Assignment[]
 }
+
+// Tracks who upvoted what — prevents double-upvoting
+model ResourceUpvote {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, resourceId])
+}
+
+// ─── LEADERBOARD & CERTIFICATES ───────────────────────────────────────────────
 
 model Leaderboard {
   id        String   @id @default(uuid())
@@ -191,7 +255,6 @@ model Leaderboard {
   category  String?
   updatedAt DateTime @updatedAt
 
-  // FKs
   studentId String
   student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   schoolId  String
@@ -206,39 +269,191 @@ model Certificate {
   fileUrl  String?
   issuedAt DateTime @default(now())
 
-  // FKs
   studentId String
   student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   eventId   String
   event     Event  @relation(fields: [eventId], references: [id])
 }
 
-model ForumPost {
-  id        String    @id @default(uuid())
-  title     String?
-  content   String
-  createdAt DateTime  @default(now())
+// ─── FORUM MODELS ─────────────────────────────────────────────────────────────
 
-  // FKs
-  eventId   String?
-  event     Event?    @relation(fields: [eventId], references: [id])
-  authorId  String
-  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  parentId  String?
-  parent    ForumPost? @relation("Replies", fields: [parentId], references: [id])
-  replies   ForumPost[] @relation("Replies")
+model ForumPost {
+  id          String    @id @default(uuid())
+  title       String?
+  content     String    // Stored as markdown
+  isEdited    Boolean   @default(false)
+  editedAt    DateTime?
+  createdAt   DateTime  @default(now())
+
+  eventId  String?
+  event    Event?    @relation(fields: [eventId], references: [id])
+  authorId String
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentId String?
+  parent   ForumPost? @relation("Replies", fields: [parentId], references: [id])
+  replies  ForumPost[] @relation("Replies")
+  likes    ForumLike[]
 }
 
-// ─── Phase 2: AI Models ───────────────────────────────────────────────────────
+model ForumLike {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, postId])
+}
+
+// ─── NOTIFICATION MODELS ──────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  data      Json?            // { eventId?, certId?, assignmentId?, postId? }
+  createdAt DateTime         @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Announcement {
+  id         String   @id @default(uuid())
+  title      String
+  content    String
+  targetRole String   @default("ALL") // ALL | STUDENT | TEACHER
+  createdAt  DateTime @default(now())
+
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+  classId  String?
+  class    Class?  @relation(fields: [classId], references: [id])
+}
+
+// ─── CLASS & TIMETABLE MODELS ─────────────────────────────────────────────────
+
+model Class {
+  id        String   @id @default(uuid())
+  name      String   // "Grade 10-A"
+  grade     String   // "10"
+  section   String   // "A"
+  year      Int      // academic year e.g. 2025
+  createdAt DateTime @default(now())
+
+  schoolId  String
+  school    School  @relation(fields: [schoolId], references: [id])
+  teacherId String?
+  teacher   User?   @relation("ClassTeacher", fields: [teacherId], references: [id])
+
+  enrollments   ClassEnrollment[]
+  assignments   Assignment[]
+  attendances   Attendance[]
+  timetableSlots TimetableSlot[]
+  announcements Announcement[]
+
+  @@unique([schoolId, grade, section, year])
+}
+
+model ClassEnrollment {
+  id         String   @id @default(uuid())
+  enrolledAt DateTime @default(now())
+
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, classId])
+}
+
+model TimetableSlot {
+  id        String   @id @default(uuid())
+  day       String   // MONDAY | TUESDAY | WEDNESDAY | THURSDAY | FRIDAY | SATURDAY
+  startTime String   // "09:00"
+  endTime   String   // "10:00"
+  subject   String
+  roomNo    String?
+  createdAt DateTime @default(now())
+
+  teacherId String
+  teacher   User   @relation("TimetableTeacher", fields: [teacherId], references: [id])
+  classId   String
+  class     Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+}
+
+// ─── ASSIGNMENT MODELS ────────────────────────────────────────────────────────
+
+model Assignment {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  instructions String? // Rich text/markdown
+  dueDate     DateTime
+  maxScore    Float    @default(100)
+  allowLate   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  classId    String
+  class      Class      @relation(fields: [classId], references: [id])
+  teacherId  String
+  teacher    User       @relation("TeacherAssignments", fields: [teacherId], references: [id])
+  resourceId String?
+  resource   Resource?  @relation(fields: [resourceId], references: [id])
+  submissions Submission[]
+}
+
+model Submission {
+  id          String           @id @default(uuid())
+  content     String?          // text submission
+  fileUrl     String?          // file submission
+  score       Float?
+  feedback    String?
+  status      SubmissionStatus @default(SUBMITTED)
+  submittedAt DateTime         @default(now())
+  gradedAt    DateTime?
+
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId    String
+  student      User       @relation(fields: [studentId], references: [id])
+
+  @@unique([assignmentId, studentId])
+}
+
+// ─── ATTENDANCE MODEL ─────────────────────────────────────────────────────────
+
+model Attendance {
+  id        String           @id @default(uuid())
+  date      DateTime         @db.Date
+  status    AttendanceStatus
+  note      String?
+  createdAt DateTime         @default(now())
+
+  classId   String
+  class     Class  @relation(fields: [classId], references: [id])
+  studentId String
+  student   User   @relation("StudentAttendance", fields: [studentId], references: [id])
+  teacherId String
+  teacher   User   @relation("TeacherAttendance", fields: [teacherId], references: [id])
+
+  @@unique([date, classId, studentId])
+}
+
+// ─── AI MODELS ────────────────────────────────────────────────────────────────
 
 model ChatSession {
-  id         String   @id @default(uuid())
-  botType    BotType
-  messages   Json     @default("[]") // [{role, content, timestamp}]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(uuid())
+  botType   BotType
+  messages  Json     @default("[]") // [{role, content, timestamp}]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  // FKs
   studentId  String
   student    User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
   resourceId String?
@@ -247,17 +462,17 @@ model ChatSession {
 
 model StudyPlan {
   id        String   @id @default(uuid())
-  planData  Json     // full plan from LangGraph
+  planData  Json
   status    String   @default("ACTIVE")
   createdAt DateTime @default(now())
 
-  // FKs
   studentId String
   student   User   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   eventId   String
   event     Event  @relation(fields: [eventId], references: [id])
 }
 
+// ─── AUTH MODELS ──────────────────────────────────────────────────────────────
 
 model OTP {
   id        String   @id @default(uuid())
@@ -269,4 +484,3 @@ model OTP {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-

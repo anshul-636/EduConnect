@@ -62,7 +62,8 @@ const adminCreate = async (req, res) => {
         email: adminEmail,
         password: hashedPassword,
         role: 'SCHOOL',
-        isActive: true, // Auto-verify email for admin-created schools
+        isActive: true,
+        isVerified: true, // Admin-provisioned accounts skip email verification
       }
     });
 

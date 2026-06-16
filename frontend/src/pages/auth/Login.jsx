@@ -22,7 +22,7 @@ const Login = () => {
 
   const handleSubmit = async e => {
     e.preventDefault(); setError('');
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$/;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(form.email)) { setError('Please enter a valid email (e.g. name@gmail.com).'); return; }
     if (form.password.length < 8) { setError('Password must be at least 8 characters.'); return; }
     setLoading(true);
@@ -63,8 +63,9 @@ const Login = () => {
     } finally { setLoading(false); }
   };
 
-  const handleGoogle = () => { 
-    window.location.href = 'http://localhost:3000/api/v1/auth/google?role=STUDENT'; 
+  const handleGoogle = () => {
+    const base = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+    window.location.href = `${base}/auth/google?role=STUDENT`;
   };
 
   return (

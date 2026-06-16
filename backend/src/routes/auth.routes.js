@@ -4,12 +4,13 @@ const { register, login, refresh, getMe, verifyEmail, resendVerificationOTP, for
 const { protect } = require('../middleware/auth.middleware');
 const passport = require('../utils/passport');
 const { createAccessToken, createRefreshToken } = require('../utils/jwt');
+const { rateLimit } = require('../utils/redis');
 
 const router = Router();
 
 const emailValidation = body('email')
   .trim()
-  .matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$/)
+  .matches(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
   .withMessage('Please enter a valid email (e.g. name@gmail.com).');
 
 const registerValidation = [
@@ -26,8 +27,22 @@ const loginValidation = [
   body('password').notEmpty().withMessage('Password is required.'),
 ];
 
+// Rate-limit login attempts: max 10 per IP per 15 minutes
+const loginRateLimiter = async (req, res, next) => {
+  const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+  const { allowed, remaining } = await rateLimit(`login:${ip}`, 10, 15 * 60 * 1000);
+  if (!allowed) {
+    return res.status(429).json({
+      success: false,
+      message: 'Too many login attempts. Please try again in 15 minutes.',
+    });
+  }
+  res.setHeader('X-RateLimit-Remaining', remaining);
+  next();
+};
+
 router.post('/register', registerValidation, register);
-router.post('/login', loginValidation, login);
+router.post('/login', loginRateLimiter, loginValidation, login);
 router.post('/refresh', refresh);
 router.get('/me', protect, getMe);
 router.post('/verify-email', verifyEmail);

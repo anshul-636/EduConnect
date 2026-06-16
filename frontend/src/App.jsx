@@ -1,71 +1,131 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import ProtectedRoute from './routes/ProtectedRoute';
-import RoleRoute from './routes/RoleRoute';
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import VerifyEmail from './pages/auth/VerifyEmail';
+import useAuthStore from './store/authStore';
+
+// Auth
+import Login          from './pages/auth/Login';
+import Register       from './pages/auth/Register';
+import OAuthCallback  from './pages/auth/OAuthCallback';
 import ForgotPassword from './pages/auth/ForgotPassword';
-import OAuthCallback from './pages/auth/OAuthCallback';
-import { AdminDashboard, SchoolDashboard, TeacherDashboard, StudentDashboard } from './pages/dashboard/index';
-import SchoolManage from './pages/dashboard/SchoolManage';
-import Schools from './pages/Schools';
-import SchoolDetail from './pages/SchoolDetail';
-import Events from './pages/Events';
-import EventDetail from './pages/EventDetail';
-import CreateEvent from './pages/CreateEvent';
-import Resources from './pages/Resources';
+import VerifyEmail    from './pages/auth/VerifyEmail';
+import ResetPassword  from './pages/auth/ResetPassword';
+
+// Dashboards
+import { StudentDashboard, TeacherDashboard, SchoolDashboard, AdminDashboard } from './pages/dashboard/index';
+
+// Core platform
+import Events         from './pages/Events';
+import EventDetail    from './pages/EventDetail';
+import CreateEvent    from './pages/CreateEvent';
+import Resources      from './pages/Resources';
 import ResourceDetail from './pages/ResourceDetail';
 import UploadResource from './pages/UploadResource';
-import Leaderboard from './pages/Leaderboard';
-import EventLeaderboard from './pages/EventLeaderboard';
-import Certificates from './pages/Certificates';
-import EventResults from './pages/EventResults';
-import Forum from './pages/Forum';
-import ForumPost from './pages/ForumPost';
-import Unauthorized from './pages/Unauthorized';
-import StudyAssistant from './pages/ai/StudyAssistant';
-import PlatformBot from './pages/ai/PlatformBot';
+import Leaderboard    from './pages/Leaderboard';
+import Certificates   from './pages/Certificates';
+import Forum          from './pages/Forum';
+import ForumPost      from './pages/ForumPost';
+import Schools        from './pages/Schools';
+import SchoolDetail   from './pages/SchoolDetail';
+import Settings       from './pages/dashboard/Settings';
+
+// Academic features (new)
+import Classes          from './pages/classes';
+import ClassDetail      from './pages/classDetail';
+import Timetable        from './pages/Timetable';
+import Assignments      from './pages/assignments';
+import AssignmentDetail from './pages/AssignmentDeatil';
+import Attendance       from './pages/attendance';
+import Announcements    from './pages/announcements';
+
+// AI
+import StudyBot    from './pages/ai/StudyAssistant';
 import StudyPlanner from './pages/ai/StudyPlanner';
-import Settings from './pages/dashboard/Settings';
+import PlatformBot from './pages/ai/PlatformBot';
 
-const App = () => (
-  <BrowserRouter>
-    <Routes>
-      <Route path='/' element={<Navigate to='/login' replace />} />
-      <Route path='/login' element={<Login />} />
-      <Route path='/register' element={<Register />} />
-      <Route path='/verify-email' element={<VerifyEmail />} />
-      <Route path='/forgot-password' element={<ForgotPassword />} />
-      <Route path='/auth/callback' element={<OAuthCallback />} />
-      <Route path='/unauthorized' element={<Unauthorized />} />
+// School admin
+import ManageSchool from './pages/dashboard/SchoolManage';
+import Notifications from './pages/Notifications';
 
-      <Route path='/schools' element={<ProtectedRoute><Schools /></ProtectedRoute>} />
-      <Route path='/schools/:id' element={<ProtectedRoute><SchoolDetail /></ProtectedRoute>} />
-      <Route path='/events' element={<ProtectedRoute><Events /></ProtectedRoute>} />
-      <Route path='/events/create' element={<ProtectedRoute><RoleRoute roles={['SCHOOL']}><CreateEvent /></RoleRoute></ProtectedRoute>} />
-      <Route path='/events/:id' element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
-      <Route path='/events/:id/results' element={<ProtectedRoute><RoleRoute roles={['SCHOOL']}><EventResults /></RoleRoute></ProtectedRoute>} />
-      <Route path='/resources' element={<ProtectedRoute><Resources /></ProtectedRoute>} />
-      <Route path='/resources/upload' element={<ProtectedRoute><RoleRoute roles={['SCHOOL','TEACHER']}><UploadResource /></RoleRoute></ProtectedRoute>} />
-      <Route path='/resources/:id' element={<ProtectedRoute><ResourceDetail /></ProtectedRoute>} />
-      <Route path='/leaderboard' element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
-      <Route path='/leaderboard/:eventId' element={<ProtectedRoute><EventLeaderboard /></ProtectedRoute>} />
-      <Route path='/certificates' element={<ProtectedRoute><RoleRoute roles={['STUDENT']}><Certificates /></RoleRoute></ProtectedRoute>} />
-      <Route path='/forum' element={<ProtectedRoute><Forum /></ProtectedRoute>} />
-      <Route path='/forum/:id' element={<ProtectedRoute><ForumPost /></ProtectedRoute>} />
+const DASHBOARD = {
+  ADMIN:   <AdminDashboard/>,
+  SCHOOL:  <SchoolDashboard/>,
+  TEACHER: <TeacherDashboard/>,
+  STUDENT: <StudentDashboard/>,
+};
 
-      <Route path='/ai/study' element={<ProtectedRoute><StudyAssistant /></ProtectedRoute>} />
-      <Route path='/ai/bot' element={<ProtectedRoute><PlatformBot /></ProtectedRoute>} />
-      <Route path='/ai/planner' element={<ProtectedRoute><StudyPlanner /></ProtectedRoute>} />
-      <Route path='/settings' element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+const ProtectedRoute = ({ children }) => {
+  const { user, token } = useAuthStore();
+  if (!token || !user) return <Navigate to="/login" replace/>;
+  return children;
+};
 
-      <Route path='/dashboard/student' element={<ProtectedRoute><RoleRoute roles={['STUDENT']}><StudentDashboard /></RoleRoute></ProtectedRoute>} />
-      <Route path='/dashboard/teacher' element={<ProtectedRoute><RoleRoute roles={['TEACHER']}><TeacherDashboard /></RoleRoute></ProtectedRoute>} />
-      <Route path='/dashboard/school' element={<ProtectedRoute><RoleRoute roles={['SCHOOL']}><SchoolDashboard /></RoleRoute></ProtectedRoute>} />
-      <Route path='/dashboard/school/manage' element={<ProtectedRoute><RoleRoute roles={['SCHOOL']}><SchoolManage /></RoleRoute></ProtectedRoute>} />
-      <Route path='/dashboard/admin' element={<ProtectedRoute><RoleRoute roles={['ADMIN']}><AdminDashboard /></RoleRoute></ProtectedRoute>} />
-      <Route path='*' element={<Navigate to='/login' replace />} />
-    </Routes>
-  </BrowserRouter>
-);
-export default App;
+const PublicRoute = ({ children }) => {
+  const { user, token } = useAuthStore();
+  if (token && user) return <Navigate to={`/dashboard/${user.role.toLowerCase()}`} replace/>;
+  return children;
+};
+
+const DashboardRedirect = () => {
+  const { user } = useAuthStore();
+  if (!user) return <Navigate to="/login" replace/>;
+  return <Navigate to={`/dashboard/${user.role.toLowerCase()}`} replace/>;
+};
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        {/* Public */}
+        <Route path="/login"    element={<PublicRoute><Login/></PublicRoute>}/>
+        <Route path="/register" element={<PublicRoute><Register/></PublicRoute>}/>
+        <Route path="/auth/callback" element={<OAuthCallback/>}/>
+        <Route path="/forgot-password" element={<PublicRoute><ForgotPassword/></PublicRoute>}/>
+        <Route path="/verify-email"    element={<VerifyEmail/>}/>
+        <Route path="/reset-password"  element={<ResetPassword/>}/>
+
+        {/* Dashboard redirect */}
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect/></ProtectedRoute>}/>
+
+        {/* Role dashboards */}
+        <Route path="/dashboard/student" element={<ProtectedRoute><StudentDashboard/></ProtectedRoute>}/>
+        <Route path="/dashboard/teacher" element={<ProtectedRoute><TeacherDashboard/></ProtectedRoute>}/>
+        <Route path="/dashboard/school"  element={<ProtectedRoute><SchoolDashboard/></ProtectedRoute>}/>
+        <Route path="/dashboard/admin"   element={<ProtectedRoute><AdminDashboard/></ProtectedRoute>}/>
+        <Route path="/dashboard/school/manage" element={<ProtectedRoute><ManageSchool/></ProtectedRoute>}/>
+
+        {/* Core platform */}
+        <Route path="/schools"           element={<ProtectedRoute><Schools/></ProtectedRoute>}/>
+        <Route path="/schools/:id"       element={<ProtectedRoute><SchoolDetail/></ProtectedRoute>}/>
+        <Route path="/events"            element={<ProtectedRoute><Events/></ProtectedRoute>}/>
+        <Route path="/events/create"     element={<ProtectedRoute><CreateEvent/></ProtectedRoute>}/>
+        <Route path="/events/:id"        element={<ProtectedRoute><EventDetail/></ProtectedRoute>}/>
+        <Route path="/resources"         element={<ProtectedRoute><Resources/></ProtectedRoute>}/>
+        <Route path="/resources/upload"  element={<ProtectedRoute><UploadResource/></ProtectedRoute>}/>
+        <Route path="/resources/:id"     element={<ProtectedRoute><ResourceDetail/></ProtectedRoute>}/>
+        <Route path="/leaderboard"       element={<ProtectedRoute><Leaderboard/></ProtectedRoute>}/>
+        <Route path="/certificates"      element={<ProtectedRoute><Certificates/></ProtectedRoute>}/>
+        <Route path="/forum"             element={<ProtectedRoute><Forum/></ProtectedRoute>}/>
+        <Route path="/forum/:id"         element={<ProtectedRoute><ForumPost/></ProtectedRoute>}/>
+        <Route path="/notifications"     element={<ProtectedRoute><Notifications/></ProtectedRoute>}/>
+        <Route path="/settings"          element={<ProtectedRoute><Settings/></ProtectedRoute>}/>
+
+        {/* Academic — new */}
+        <Route path="/classes"           element={<ProtectedRoute><Classes/></ProtectedRoute>}/>
+        <Route path="/classes/:id"       element={<ProtectedRoute><ClassDetail/></ProtectedRoute>}/>
+        <Route path="/timetable"         element={<ProtectedRoute><Timetable/></ProtectedRoute>}/>
+        <Route path="/assignments"       element={<ProtectedRoute><Assignments/></ProtectedRoute>}/>
+        <Route path="/assignments/:id"   element={<ProtectedRoute><AssignmentDetail/></ProtectedRoute>}/>
+        <Route path="/attendance"        element={<ProtectedRoute><Attendance/></ProtectedRoute>}/>
+        <Route path="/announcements"     element={<ProtectedRoute><Announcements/></ProtectedRoute>}/>
+
+        {/* AI */}
+        <Route path="/ai/study"   element={<ProtectedRoute><StudyBot/></ProtectedRoute>}/>
+        <Route path="/ai/planner" element={<ProtectedRoute><StudyPlanner/></ProtectedRoute>}/>
+        <Route path="/ai/bot"     element={<ProtectedRoute><PlatformBot/></ProtectedRoute>}/>
+
+        {/* Fallback */}
+        <Route path="/" element={<Navigate to="/dashboard" replace/>}/>
+        <Route path="*" element={<Navigate to="/dashboard" replace/>}/>
+      </Routes>
+    </BrowserRouter>
+  );
+}

@@ -53,8 +53,13 @@ const FloatingBot = () => {
       const updatedWithAssistant = [...updatedWithUser, assistantMsg];
       setMessages(updatedWithAssistant);
       localStorage.setItem(`educonnect_chat_history_${user.id}`, JSON.stringify(updatedWithAssistant));
-    } catch {
-      const errorMsg = { role: 'assistant', content: 'AI service unavailable.' };
+    } catch (err) {
+      const backendMessage = err?.response?.data?.message;
+      const status = err?.response?.status;
+      const errorText = status === 401
+        ? 'Session expired or missing. Please sign in again.'
+        : backendMessage || err?.message || 'AI service unavailable.';
+      const errorMsg = { role: 'assistant', content: errorText };
       const updatedWithError = [...updatedWithUser, errorMsg];
       setMessages(updatedWithError);
       localStorage.setItem(`educonnect_chat_history_${user.id}`, JSON.stringify(updatedWithError));
