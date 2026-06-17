@@ -7,100 +7,23 @@ const DASH = { ADMIN: '/dashboard/admin', SCHOOL: '/dashboard/school', TEACHER: 
 
 // ─── Animated Study Background ───────────────────────────────────────────────
 const StudyBackground = () => {
-  const floatingItems = [
-    { icon: '📐', x: 8, y: 15, delay: 0, duration: 6 },
-    { icon: '🔬', x: 85, y: 10, delay: 1, duration: 7 },
-    { icon: '📚', x: 15, y: 70, delay: 2, duration: 8 },
-    { icon: '✏️', x: 78, y: 65, delay: 0.5, duration: 6.5 },
-    { icon: '🧮', x: 50, y: 8, delay: 1.5, duration: 7.5 },
-    { icon: '🔭', x: 92, y: 45, delay: 3, duration: 9 },
-    { icon: '📊', x: 5, y: 45, delay: 2.5, duration: 7 },
-    { icon: '🧬', x: 65, y: 80, delay: 1, duration: 8 },
-    { icon: '💡', x: 35, y: 85, delay: 0, duration: 6 },
-    { icon: '🎯', x: 72, y: 20, delay: 3.5, duration: 9 },
-    { icon: '📝', x: 25, y: 30, delay: 2, duration: 7 },
-    { icon: '🧪', x: 55, y: 55, delay: 4, duration: 8.5 },
-  ];
-
-  const equations = [
-    { text: 'E = mc²', x: 10, y: 25, delay: 0 },
-    { text: 'F = ma', x: 80, y: 30, delay: 1.5 },
-    { text: 'a² + b² = c²', x: 20, y: 75, delay: 3 },
-    { text: '∫f(x)dx', x: 70, y: 72, delay: 2 },
-    { text: 'H₂O', x: 45, y: 18, delay: 1 },
-    { text: 'π ≈ 3.14', x: 88, y: 58, delay: 4 },
-    { text: 'y = mx+b', x: 3, y: 55, delay: 2.5 },
-  ];
-
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Deep space gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#050b1a] via-[#080f1e] to-[#0a0520]" />
+    <div className="absolute inset-0 overflow-hidden pointer-events-none fade-in">
+      {/* Deep neutral background */}
+      <div className="absolute inset-0 bg-dark-950" />
+      <div className="absolute inset-0 noise" />
 
       {/* Subtle grid */}
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage: 'linear-gradient(#7c3aed 1px, transparent 1px), linear-gradient(90deg, #7c3aed 1px, transparent 1px)',
-          backgroundSize: '60px 60px',
-        }}
-      />
+      <div className="absolute inset-0 bg-dots opacity-20" />
 
-      {/* Glowing orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-brand-600/5 blur-[100px] animate-pulse-slow" />
-      <div className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-full bg-purple-700/5 blur-[80px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
-      <div className="absolute top-1/2 left-1/2 w-64 h-64 rounded-full bg-indigo-600/5 blur-[90px] animate-pulse-slow" style={{ animationDelay: '4s' }} />
-
-      {/* Floating study icons */}
-      {floatingItems.map((item, i) => (
-        <div
-          key={i}
-          className="absolute text-2xl opacity-10 select-none animate-float-random"
-          style={{
-            left: `${item.x}%`,
-            top: `${item.y}%`,
-            animationDelay: `${item.delay}s`,
-            animationDuration: `${item.duration}s`,
-            filter: 'grayscale(30%)',
-          }}
-        >
-          {item.icon}
-        </div>
-      ))}
-
-      {/* Floating equations */}
-      {equations.map((eq, i) => (
-        <div
-          key={i}
-          className="absolute font-mono text-sm font-bold opacity-5 select-none animate-drift"
-          style={{
-            left: `${eq.x}%`,
-            top: `${eq.y}%`,
-            color: '#a855f7',
-            animationDelay: `${eq.delay}s`,
-            animationDuration: '10s',
-          }}
-        >
-          {eq.text}
-        </div>
-      ))}
-
-      {/* Shooting particles */}
-      {[...Array(5)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute w-1 h-1 rounded-full bg-brand-400/30 animate-shoot"
-          style={{
-            left: `${20 + i * 15}%`,
-            top: `${30 + i * 10}%`,
-            animationDelay: `${i * 2}s`,
-            animationDuration: '4s',
-          }}
-        />
-      ))}
+      {/* Hero mesh gradients / Glowing orbs */}
+      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-brand-500/10 blur-[120px] animate-pulse-slow" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-500/10 blur-[130px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
+      <div className="absolute top-[20%] right-[30%] w-[30%] h-[30%] rounded-full bg-purple-600/5 blur-[100px] animate-pulse-slow" style={{ animationDelay: '4s' }} />
     </div>
   );
 };
+
 
 // ─── Animated CSS injector ────────────────────────────────────────────────────
 const AuthStyles = () => (
@@ -141,61 +64,63 @@ const AuthStyles = () => (
     .animate-glass-in { animation: glassIn 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
 
     .glass-card {
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(124, 58, 237, 0.2);
-      box-shadow: 0 0 0 1px rgba(168,85,247,0.05), 0 32px 64px -16px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04);
+      background: rgba(20, 20, 20, 0.4);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.02), 0 30px 60px -10px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
     }
     .glass-input {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: #f1f5f9;
-      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #ffffff;
+      border-radius: 10px;
       padding: 12px 16px;
       width: 100%;
-      font-size: 0.9rem;
-      transition: all 0.2s;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       outline: none;
     }
-    .glass-input::placeholder { color: rgba(148,163,184,0.5); }
+    .glass-input::placeholder { color: rgba(255,255,255,0.3); font-weight: 400; }
     .glass-input:focus {
-      border-color: rgba(168,85,247,0.5);
-      background: rgba(255,255,255,0.06);
-      box-shadow: 0 0 0 3px rgba(168,85,247,0.12);
+      border-color: rgba(255,255,255,0.4);
+      background: rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0 0 4px rgba(255,255,255,0.05);
     }
     .btn-glow {
-      background: linear-gradient(135deg, #7c3aed, #9333ea, #a855f7);
-      color: white;
-      font-weight: 600;
-      border-radius: 12px;
+      background: #ffffff;
+      color: #000000;
+      font-weight: 700;
+      border-radius: 10px;
       padding: 12px 20px;
       width: 100%;
       border: none;
       cursor: pointer;
       position: relative;
-      overflow: hidden;
-      transition: all 0.25s;
-      font-size: 0.9rem;
-      box-shadow: 0 0 24px -6px rgba(168,85,247,0.45);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 0.95rem;
+      box-shadow: 0 0 20px -5px rgba(255,255,255,0.3);
     }
     .btn-glow:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 0 32px -4px rgba(168,85,247,0.6);
+      transform: translateY(-1.5px);
+      box-shadow: 0 0 30px -5px rgba(255,255,255,0.5);
+      background: #f8f8f8;
     }
     .btn-glow:active { transform: translateY(0px); }
-    .btn-glow:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-glow:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    
     .btn-google {
-      background: rgba(255,255,255,0.04);
+      background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.1);
-      color: #e2e8f0;
-      font-weight: 500;
-      border-radius: 12px;
-      padding: 11px 20px;
+      color: #ffffff;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 12px 20px;
       width: 100%;
       cursor: pointer;
-      transition: all 0.2s;
-      font-size: 0.875rem;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-size: 0.9rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -203,9 +128,8 @@ const AuthStyles = () => (
     }
     .btn-google:hover {
       background: rgba(255,255,255,0.08);
-      border-color: rgba(255,255,255,0.18);
+      border-color: rgba(255,255,255,0.2);
     }
-    .hover-glow:hover { box-shadow: 0 0 16px -4px rgba(168,85,247,0.3); }
   `}</style>
 );
 
@@ -280,10 +204,10 @@ const Login = () => {
 
         <div className="relative z-10 w-full max-w-md animate-glass-in">
           {/* Logo */}
-          <div className="text-center mb-8 animate-slide-up">
-            <div className="inline-flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-600 to-purple-700 flex items-center justify-center shadow-lg" style={{ boxShadow: '0 0 24px -4px rgba(168,85,247,0.5)' }}>
-                <span className="text-2xl">🎓</span>
+          <div className="text-center mb-10 animate-slide-up">
+            <div className="inline-flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-[14px] bg-white text-black flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.2)]">
+                <span className="text-2xl mt-1">🎓</span>
               </div>
               <span className="text-2xl font-bold text-white tracking-tight">EduConnect</span>
             </div>
@@ -358,9 +282,9 @@ const Login = () => {
               </button>
             </form>
 
-            <p className="text-center text-sm text-slate-500 mt-5">
+            <p className="text-center text-sm text-slate-400 mt-6 pt-2 border-t border-white/5">
               Don't have an account?{' '}
-              <Link to="/register" className="text-brand-400 font-semibold hover:text-brand-300 transition-colors">
+              <Link to="/register" className="text-white font-semibold hover:text-slate-300 transition-colors">
                 Create one free
               </Link>
             </p>

@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const { body } = require('express-validator');
-const { create, getAll, getById, update, getMySchool, getMembers, remove, adminCreate } = require('../controllers/school.controller');
+const { create, getAll, getById, update, getMySchool, getMembers, remove, adminCreate, join } = require('../controllers/school.controller');
 const { protect } = require('../middleware/auth.middleware');
 const { restrictTo } = require('../middleware/role.middleware');
 
@@ -21,6 +21,7 @@ router.get('/:id', getById);
 // Protected
 router.post('/', protect, restrictTo('SCHOOL'), schoolValidation, create);
 router.post('/admin-create', protect, restrictTo('ADMIN'), adminCreate);
+router.post('/:id/join', protect, restrictTo('STUDENT', 'TEACHER'), join);
 router.put('/:id', protect, restrictTo('SCHOOL', 'ADMIN'), schoolValidation, update);
 router.delete('/:id', protect, restrictTo('ADMIN'), remove);
 

@@ -69,7 +69,12 @@ class AssignmentService {
 
   async getForTeacher(teacherId) {
     return prisma.assignment.findMany({
-      where: { teacherId },
+      where: {
+        OR: [
+          { teacherId: teacherId },
+          { class: { teacherId: teacherId } }
+        ]
+      },
       orderBy: { createdAt: 'desc' },
       include: {
         class:  { select: { id: true, name: true, grade: true, section: true } },
@@ -125,12 +130,16 @@ class AssignmentService {
     });
   }
 
-  async grade(submissionId, { score, feedback }, teacherId) {
+  async grade(submissionId, { score, feedback }, teacherId, userRole) {
     const sub = await prisma.submission.findUnique({
-      where: { id: submissionId }, include: { assignment: true },
+      where: { id: submissionId }, include: { assignment: { include: { class: true } } },
     });
     if (!sub) { const e = new Error('Submission not found'); e.statusCode = 404; throw e; }
-    if (sub.assignment.teacherId !== teacherId) { const e = new Error('Forbidden'); e.statusCode = 403; throw e; }
+    
+    // Can grade if you created it, or you are the class teacher, or you are a SCHOOL admin
+    if (sub.assignment.teacherId !== teacherId && sub.assignment.class.teacherId !== teacherId && userRole !== 'SCHOOL') { 
+      const e = new Error('Forbidden'); e.statusCode = 403; throw e; 
+    }
     const updated = await prisma.submission.update({
       where: { id: submissionId },
       data: { score: parseFloat(score), feedback, status: 'GRADED', gradedAt: new Date() },

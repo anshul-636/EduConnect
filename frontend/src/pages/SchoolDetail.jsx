@@ -3,12 +3,29 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/common/Layout';
 import Loader from '../components/common/Loader';
 import schoolService from '../services/schoolService';
+import useAuthStore from '../store/authStore';
 
 const SchoolDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, setAuth, accessToken, refreshToken } = useAuthStore();
   const [school, setSchool] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [joining, setJoining] = useState(false);
+
+  const handleJoin = async () => {
+    setJoining(true);
+    try {
+      const res = await schoolService.join(school.id);
+      const updatedUser = { ...user, schoolId: school.id };
+      setAuth(updatedUser, accessToken, refreshToken);
+      alert(res.message || 'Successfully joined the school!');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to join school.');
+    } finally {
+      setJoining(false);
+    }
+  };
 
   useEffect(() => {
     schoolService.getById(id)
@@ -25,16 +42,35 @@ const SchoolDetail = () => {
       <div className='max-w-4xl mx-auto'>
         <button onClick={() => navigate('/schools')} className='text-dark-400 hover:text-dark-100 text-sm mb-6'>← Back to Schools</button>
         <div className='card'>
-          <div className='flex items-start gap-5 mb-6'>
-            <div className='w-16 h-16 rounded-2xl bg-gradient-brand flex items-center justify-center text-white font-display font-bold text-2xl'>
-              {school.name.charAt(0)}
+          <div className='flex items-start justify-between gap-5 mb-6'>
+            <div className='flex items-start gap-5'>
+              <div className='w-16 h-16 rounded-2xl bg-gradient-brand flex items-center justify-center text-white font-display font-bold text-2xl'>
+                {school.name.charAt(0)}
+              </div>
+              <div>
+                <h1 className='font-display font-bold text-2xl text-dark-50'>{school.name}</h1>
+                <p className='text-dark-400 text-sm mt-1'>{school.location || 'Location not set'}</p>
+                <span className='inline-block mt-2 text-xs bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded-full'>
+                  {school.affiliation || 'Affiliation not set'}
+                </span>
+              </div>
             </div>
             <div>
-              <h1 className='font-display font-bold text-2xl text-dark-50'>{school.name}</h1>
-              <p className='text-dark-400 text-sm mt-1'>{school.location || 'Location not set'}</p>
-              <span className='inline-block mt-2 text-xs bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded-full'>
-                {school.affiliation || 'Affiliation not set'}
-              </span>
+              {(user?.role === 'STUDENT' || user?.role === 'TEACHER') && (
+                user.schoolId === school.id ? (
+                  <span className='px-4 py-2 bg-green-500/20 text-green-400 text-sm font-semibold rounded-xl'>
+                    ✓ Joined
+                  </span>
+                ) : !user.schoolId ? (
+                  <button 
+                    onClick={handleJoin} 
+                    disabled={joining} 
+                    className='px-4 py-2 bg-gradient-brand text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity whitespace-nowrap shadow-glow'
+                  >
+                    {joining ? 'Joining...' : 'Join School'}
+                  </button>
+                ) : null
+              )}
             </div>
           </div>
           <div className='grid grid-cols-3 gap-4 mb-6'>

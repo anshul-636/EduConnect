@@ -96,4 +96,21 @@ const adminCreate = async (req, res) => {
   }
 };
 
-module.exports = { create, getAll, getById, update, getMySchool, getMembers, remove, adminCreate };
+const join = async (req, res) => {
+  try {
+    const prisma = require('../utils/prisma');
+    const school = await prisma.school.findUnique({ where: { id: req.params.id } });
+    if (!school) return res.status(404).json({ success: false, message: 'School not found.' });
+
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { schoolId: school.id }
+    });
+
+    res.json({ success: true, message: `Successfully joined ${school.name}`, user });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = { create, getAll, getById, update, getMySchool, getMembers, remove, adminCreate, join };

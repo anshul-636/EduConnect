@@ -14,14 +14,14 @@ import NotificationBell from './NotificationBell';
 
 // ─── Role colour palette ───────────────────────────────────────────────────────
 const roleGradient = {
-  ADMIN:   'from-red-500 to-orange-500',
-  SCHOOL:  'from-purple-500 to-pink-500',
-  TEACHER: 'from-emerald-500 to-teal-500',
-  STUDENT: 'from-brand-500 to-cyan-500',
+  ADMIN:   'from-zinc-500 to-zinc-700',
+  SCHOOL:  'from-brand-500 to-purple-600',
+  TEACHER: 'from-amber-500 to-orange-600',
+  STUDENT: 'from-brand-500 to-fuchsia-600',
 };
 const roleAccent = {
-  ADMIN:   '#f97316', SCHOOL:  '#a855f7',
-  TEACHER: '#10b981', STUDENT: '#a855f7',
+  ADMIN:   '#71717a', SCHOOL:  '#a855f7',
+  TEACHER: '#f59e0b', STUDENT: '#c026d3',
 };
 
 // ─── Navigation config ────────────────────────────────────────────────────────
@@ -200,19 +200,20 @@ export default function Layout({ children }) {
 
       {/* ── Sidebar ────────────────────────────────────────────────────────── */}
       <aside
-        className={`flex flex-col bg-dark-900 border-r border-dark-800 flex-shrink-0 transition-all duration-300 ${open ? 'w-60' : 'w-[60px]'}`}
+        className={`flex flex-col flex-shrink-0 transition-all duration-300 border-r border-white/5 ${open ? 'w-60' : 'w-[60px]'}`}
+        style={{ background: 'rgba(10, 10, 10, 0.85)', backdropFilter: 'blur(20px)' }}
       >
         {/* Logo */}
-        <div className={`flex items-center h-14 border-b border-dark-800 flex-shrink-0 ${open ? 'px-4 gap-3' : 'justify-center'}`}>
+        <div className={`flex items-center h-14 border-b border-white/5 flex-shrink-0 ${open ? 'px-4 gap-3' : 'justify-center'}`}>
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-display font-bold text-sm flex-shrink-0 shadow-glow"
-            style={{ background: `linear-gradient(135deg, ${accent}, ${accent}99)` }}
+            style={{ background: `linear-gradient(135deg, ${accent}, ${accent}cc)` }}
           >
             E
           </div>
           {open && (
             <div>
-              <span className="font-display font-bold text-dark-50 text-base leading-tight">EduConnect</span>
+              <span className="font-display font-black text-dark-50 text-base leading-tight tracking-tight">EduConnect</span>
               <p className="text-[10px] text-dark-500 font-medium">Education Platform</p>
             </div>
           )}
@@ -237,10 +238,14 @@ export default function Layout({ children }) {
                     className={`flex items-center rounded-xl transition-all duration-150 group
                       ${open ? 'gap-3 px-3 py-2' : 'justify-center p-2.5'}
                       ${active
-                        ? 'text-white shadow-sm'
-                        : 'text-dark-400 hover:text-dark-100 hover:bg-dark-800'
+                        ? 'text-white'
+                        : 'text-dark-500 hover:text-dark-100 hover:bg-white/5'
                       }`}
-                    style={active ? { background: `linear-gradient(135deg, ${accent}33, ${accent}11)`, borderLeft: `2px solid ${accent}` } : {}}
+                    style={active ? {
+                      background: `linear-gradient(135deg, ${accent}25, ${accent}10)`,
+                      borderLeft: open ? `2px solid ${accent}` : 'none',
+                      boxShadow: `0 0 20px -10px ${accent}`,
+                    } : {}}
                   >
                     <Icon
                       size={16}
@@ -260,7 +265,7 @@ export default function Layout({ children }) {
         </div>
 
         {/* User footer */}
-        <div className={`border-t border-dark-800 p-2 flex-shrink-0 ${open ? '' : 'flex justify-center'}`}>
+        <div className={`border-t border-white/5 p-2 flex-shrink-0 ${open ? '' : 'flex justify-center'}`}>
           {open ? (
             <div className="flex items-center gap-2">
               <button
@@ -289,9 +294,9 @@ export default function Layout({ children }) {
 
       {/* ── Main area ──────────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-
         {/* Top bar */}
-        <header className="h-14 bg-dark-900/80 border-b border-dark-800 backdrop-blur-sm flex items-center justify-between px-5 flex-shrink-0 z-30">
+        <header className="h-14 border-b border-white/5 flex items-center justify-between px-5 flex-shrink-0 z-30"
+          style={{ background: 'rgba(10, 10, 10, 0.75)', backdropFilter: 'blur(20px)' }}>
           <div className="flex items-center gap-3">
             <button
               onClick={() => setOpen(!open)}

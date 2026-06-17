@@ -14,5 +14,5 @@ exports.getMine     = async (req, res) => {
   } catch(e) { err(res, e); }
 };
 exports.submit = async (req, res) => { try { ok(res, await svc.submit(req.params.id, req.user.id, req.body, req.file)); } catch(e) { err(res, e); } };
-exports.grade  = async (req, res) => { try { ok(res, await svc.grade(req.params.submissionId, req.body, req.user.id)); } catch(e) { err(res, e); } };
+exports.grade  = async (req, res) => { try { ok(res, await svc.grade(req.params.submissionId, req.body, req.user.id, req.user.role)); } catch(e) { err(res, e); } };
 exports.remove = async (req, res) => { try { await svc.delete(req.params.id, req.user.id); ok(res, { deleted: true }); } catch(e) { err(res, e); } };

@@ -7,5 +7,6 @@ const schoolService = {
   getMySchool: async () => { const res = await api.get("/schools/my/school"); return res.data; },
   delete: async (id) => { const res = await api.delete("/schools/" + id); return res.data; },
   adminCreate: async (data) => { const res = await api.post("/schools/admin-create", data); return res.data; },
+  join: async (id) => { const res = await api.post("/schools/" + id + "/join"); return res.data; },
 };
 export default schoolService;
