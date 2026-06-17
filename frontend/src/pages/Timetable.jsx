@@ -4,18 +4,18 @@ import Layout from '../components/common/Layout';
 import classService from '../services/classService';
 import useAuthStore from '../store/authStore';
 
-const DAYS = ['MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
-const DAY_LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat'];
-const HOURS = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00'];
+const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const HOURS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
 const SUBJECT_COLORS = [
   { bg: 'bg-violet-900/60 border-violet-600/50', text: 'text-violet-200', dot: 'bg-violet-400' },
-  { bg: 'bg-cyan-900/60 border-cyan-600/50',     text: 'text-cyan-200',   dot: 'bg-cyan-400' },
+  { bg: 'bg-cyan-900/60 border-cyan-600/50', text: 'text-cyan-200', dot: 'bg-cyan-400' },
   { bg: 'bg-emerald-900/60 border-emerald-600/50', text: 'text-emerald-200', dot: 'bg-emerald-400' },
-  { bg: 'bg-amber-900/60 border-amber-600/50',   text: 'text-amber-200',  dot: 'bg-amber-400' },
-  { bg: 'bg-rose-900/60 border-rose-600/50',     text: 'text-rose-200',   dot: 'bg-rose-400' },
-  { bg: 'bg-blue-900/60 border-blue-600/50',     text: 'text-blue-200',   dot: 'bg-blue-400' },
-  { bg: 'bg-pink-900/60 border-pink-600/50',     text: 'text-pink-200',   dot: 'bg-pink-400' },
+  { bg: 'bg-amber-900/60 border-amber-600/50', text: 'text-amber-200', dot: 'bg-amber-400' },
+  { bg: 'bg-rose-900/60 border-rose-600/50', text: 'text-rose-200', dot: 'bg-rose-400' },
+  { bg: 'bg-blue-900/60 border-blue-600/50', text: 'text-blue-200', dot: 'bg-blue-400' },
+  { bg: 'bg-pink-900/60 border-pink-600/50', text: 'text-pink-200', dot: 'bg-pink-400' },
   { bg: 'bg-indigo-900/60 border-indigo-600/50', text: 'text-indigo-200', dot: 'bg-indigo-400' },
 ];
 
@@ -71,6 +71,7 @@ export default function Timetable() {
   useEffect(() => {
     if (user?.role === 'TEACHER') {
       loadTeacherTimetable();
+      loadTeacherClasses();
     } else if (user?.role === 'SCHOOL' || user?.role === 'STUDENT') {
       loadClasses();
     }
@@ -81,8 +82,20 @@ export default function Timetable() {
     try {
       const r = await classService.getMyTimetable();
       setSlots(r.data.data || []);
-    } catch (_) {}
+    } catch (_) { }
     setLoading(false);
+  };
+
+  // Teachers can only add/manage slots for classes where they're the assigned
+  // class (homeroom) teacher, so we scope the picker to just those classes
+  // rather than the whole school's class list.
+  const loadTeacherClasses = async () => {
+    try {
+      const r = await classService.getAll({});
+      const list = (r.data.data || []).filter(c => c.teacher?.id === user.id);
+      setClasses(list);
+      if (list.length > 0) setSelectedClass(list[0].id);
+    } catch (_) { }
   };
 
   const loadClasses = async () => {
@@ -94,7 +107,7 @@ export default function Timetable() {
         setSelectedClass(list[0].id);
         loadClassTimetable(list[0].id);
       }
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const loadClassTimetable = async (classId) => {
@@ -102,7 +115,7 @@ export default function Timetable() {
     try {
       const r = await classService.getById(classId);
       setSlots(r.data.data?.timetableSlots || []);
-    } catch (_) {}
+    } catch (_) { }
     setLoading(false);
   };
 
@@ -128,7 +141,7 @@ export default function Timetable() {
     try {
       await classService.deleteSlot(selectedClass || '', slotId);
       setSlots(prev => prev.filter(s => s.id !== slotId));
-    } catch (_) {}
+    } catch (_) { }
   };
 
   // Group slots by day
@@ -195,7 +208,7 @@ export default function Timetable() {
             {DAYS.map(d => (
               <div key={d} className="space-y-2">
                 <div className="h-8 bg-dark-800 rounded-xl animate-pulse" />
-                {[1,2,3].map(i => <div key={i} className="h-20 bg-dark-800 rounded-xl animate-pulse" />)}
+                {[1, 2, 3].map(i => <div key={i} className="h-20 bg-dark-800 rounded-xl animate-pulse" />)}
               </div>
             ))}
           </div>
@@ -256,7 +269,11 @@ export default function Timetable() {
             </div>
             <p className="text-dark-300 font-semibold text-lg">No classes scheduled</p>
             <p className="text-dark-500 text-sm mt-1">
-              {canEdit ? 'Click "Add Class" to build your timetable.' : 'No timetable has been set up yet.'}
+              {canEdit && selectedClass
+                ? 'Click "Add Class" to build your timetable.'
+                : user?.role === 'TEACHER'
+                  ? "You're not assigned as the class teacher for any class yet, so there's nothing to manage here."
+                  : 'No timetable has been set up yet.'}
             </p>
           </div>
         )}

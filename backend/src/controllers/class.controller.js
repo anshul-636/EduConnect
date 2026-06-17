@@ -3,7 +3,7 @@ const ok = (res, data, code = 200) => res.status(code).json({ success: true, dat
 const err = (res, e) => res.status(e.statusCode || 500).json({ success: false, message: e.message });
 
 exports.create = async (req, res) => { try { ok(res, await svc.create(req.body, req.user.id), 201); } catch (e) { err(res, e); } };
-exports.getAll = async (req, res) => { try { ok(res, await svc.getAll(req.query.schoolId, req.query)); } catch (e) { err(res, e); } };
+exports.getAll = async (req, res) => { try { ok(res, await svc.getAll(req.query.schoolId || req.user.schoolId || undefined, req.query)); } catch (e) { err(res, e); } };
 exports.getById = async (req, res) => { try { ok(res, await svc.getById(req.params.id)); } catch (e) { err(res, e); } };
 exports.update = async (req, res) => { try { ok(res, await svc.update(req.params.id, req.body)); } catch (e) { err(res, e); } };
 exports.remove = async (req, res) => { try { await svc.delete(req.params.id); ok(res, { deleted: true }); } catch (e) { err(res, e); } };

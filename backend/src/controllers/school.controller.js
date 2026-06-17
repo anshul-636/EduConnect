@@ -33,6 +33,13 @@ const update = async (req, res) => {
   } catch (err) { res.status(err.statusCode || 500).json({ success: false, message: err.message }); }
 };
 
+const getMembers = async (req, res) => {
+  try {
+    const members = await schoolService.getMembers(req.user, req.query);
+    res.json({ success: true, data: members });
+  } catch (err) { res.status(err.statusCode || 500).json({ success: false, message: err.message }); }
+};
+
 const getMySchool = async (req, res) => {
   try {
     const school = await schoolService.getMySchool(req.user.id);
@@ -51,11 +58,11 @@ const adminCreate = async (req, res) => {
   try {
     const { name, location, affiliation, adminName, adminEmail, adminPassword } = req.body;
     const prisma = require('../utils/prisma');
-    
+
     // 1. Create a new user with role SCHOOL
     const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
-    
+
     const adminUser = await prisma.user.create({
       data: {
         name: adminName,
@@ -89,4 +96,4 @@ const adminCreate = async (req, res) => {
   }
 };
 
-module.exports = { create, getAll, getById, update, getMySchool, remove, adminCreate };
+module.exports = { create, getAll, getById, update, getMySchool, getMembers, remove, adminCreate };

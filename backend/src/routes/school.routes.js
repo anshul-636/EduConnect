@@ -1,6 +1,6 @@
 const { Router } = require('express');
 const { body } = require('express-validator');
-const { create, getAll, getById, update, getMySchool, remove, adminCreate } = require('../controllers/school.controller');
+const { create, getAll, getById, update, getMySchool, getMembers, remove, adminCreate } = require('../controllers/school.controller');
 const { protect } = require('../middleware/auth.middleware');
 const { restrictTo } = require('../middleware/role.middleware');
 
@@ -15,6 +15,7 @@ const schoolValidation = [
 // Public
 router.get('/', getAll);
 router.get('/my/school', protect, restrictTo('SCHOOL'), getMySchool); // must be before /:id
+router.get('/members', protect, restrictTo('SCHOOL', 'ADMIN'), getMembers); // must be before /:id
 router.get('/:id', getById);
 
 // Protected

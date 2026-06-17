@@ -52,6 +52,33 @@ class SchoolService {
     return prisma.school.update({ where: { id }, data });
   }
 
+  async getMembers(requester, { role, search, schoolId: queryStringSchoolId }) {
+    let schoolId = requester.schoolId;
+    if (requester.role === 'ADMIN') {
+      schoolId = queryStringSchoolId || requester.schoolId;
+    }
+    if (!schoolId) {
+      const err = new Error('No school is associated with this account.');
+      err.statusCode = 400; throw err;
+    }
+
+    const where = { schoolId };
+    if (role) where.role = role;
+    if (search && search.trim()) {
+      where.OR = [
+        { name: { contains: search.trim(), mode: 'insensitive' } },
+        { email: { contains: search.trim(), mode: 'insensitive' } },
+      ];
+    }
+
+    return prisma.user.findMany({
+      where,
+      select: { id: true, name: true, email: true, role: true },
+      orderBy: { name: 'asc' },
+      take: 20,
+    });
+  }
+
   async getMySchool(userId) {
     const school = await prisma.school.findUnique({
       where: { adminId: userId },
@@ -76,7 +103,7 @@ class SchoolService {
     // Deleting a school requires removing/updating related entities first:
     // Update all users who are members of this school to set schoolId to null
     await prisma.user.updateMany({ where: { schoolId: id }, data: { schoolId: null } });
-    
+
     // Delete registrations, leaderboard, resources, events linked to the school
     const events = await prisma.event.findMany({ where: { schoolId: id }, select: { id: true } });
     const eventIds = events.map(e => e.id);
@@ -84,7 +111,7 @@ class SchoolService {
     await prisma.leaderboard.deleteMany({ where: { eventId: { in: eventIds } } });
     await prisma.event.deleteMany({ where: { schoolId: id } });
     await prisma.resource.deleteMany({ where: { uploadedBy: school.adminId } });
-    
+
     // Set admin's schoolId to null so the user doesn't have a deleted school link
     await prisma.user.update({ where: { id: school.adminId }, data: { schoolId: null } });
 
