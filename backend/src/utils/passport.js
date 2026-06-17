@@ -11,34 +11,28 @@ passport.use(new GoogleStrategy({
   try {
     const email = profile.emails[0].value;
     const name = profile.displayName;
-    const role = req.session.role || 'STUDENT';
+    const googleId = profile.id;
 
-    let user = await prisma.user.findUnique({ where: { email } });
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
 
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email,
-          name,
-          password: 'GOOGLE_OAUTH_' + profile.id,
-          role,
-          isActive: true,
-        },
-      });
+    if (existingUser) {
+      // Existing user — log them in normally
+      return done(null, { user: existingUser, isNewUser: false });
     }
 
-    return done(null, user);
+    // New user — DO NOT auto-create. Pass profile data so frontend can ask for role.
+    return done(null, {
+      isNewUser: true,
+      pendingProfile: { email, name, googleId },
+    });
+
   } catch (err) {
     return done(err, null);
   }
 }));
 
-passport.serializeUser((user, done) => done(null, user.id));
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await prisma.user.findUnique({ where: { id } });
-    done(null, user);
-  } catch (err) { done(err, null); }
-});
+passport.serializeUser((data, done) => done(null, data));
+passport.deserializeUser((data, done) => done(null, data));
 
 module.exports = passport;

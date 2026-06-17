@@ -83,7 +83,53 @@ class AuthService {
   }
 
   async delete(userId) {
-    return prisma.user.delete({ where: { id: userId } });
+    // Must delete in dependency order — child records first, then user.
+    // Models WITHOUT onDelete:Cascade on their userId/teacherId/studentId field
+    // will block the final prisma.user.delete if not cleared first.
+    await prisma.$transaction(async (tx) => {
+
+      // 1. Assignments created by this teacher (no cascade on teacherId)
+      await tx.assignment.deleteMany({ where: { teacherId: userId } });
+
+      // 2. Submissions by this student (no cascade on studentId)
+      await tx.submission.deleteMany({ where: { studentId: userId } });
+
+      // 3. Attendance records (no cascade on studentId / teacherId)
+      await tx.attendance.deleteMany({ where: { studentId: userId } });
+      await tx.attendance.deleteMany({ where: { teacherId: userId } });
+
+      // 4. Timetable slots where this user is the teacher (no cascade)
+      await tx.timetableSlot.deleteMany({ where: { teacherId: userId } });
+
+      // 5. Classes where this user is the teacher (no cascade on teacherId)
+      await tx.class.updateMany({ where: { teacherId: userId }, data: { teacherId: null } });
+
+      // 6. Announcements authored by this user (no cascade on authorId)
+      await tx.announcement.deleteMany({ where: { authorId: userId } });
+
+      // 7. Leaderboard entries (no cascade on studentId)
+      await tx.leaderboard.deleteMany({ where: { studentId: userId } });
+
+      // 8. School admin relation — unset if this user is a school admin
+      await tx.school.updateMany({ where: { adminId: userId }, data: { adminId: null } });
+
+      // The following already have onDelete:Cascade in schema so Prisma
+      // handles them automatically, but we delete them anyway for safety:
+      await tx.registration.deleteMany({ where: { studentId: userId } });
+      await tx.resource.deleteMany({ where: { uploadedBy: userId } });
+      await tx.resourceUpvote.deleteMany({ where: { userId: userId } });
+      await tx.certificate.deleteMany({ where: { studentId: userId } });
+      await tx.forumPost.deleteMany({ where: { authorId: userId } });
+      await tx.forumLike.deleteMany({ where: { userId: userId } });
+      await tx.notification.deleteMany({ where: { userId: userId } });
+      await tx.classEnrollment.deleteMany({ where: { userId: userId } });
+      await tx.chatSession.deleteMany({ where: { studentId: userId } });
+      await tx.studyPlan.deleteMany({ where: { studentId: userId } });
+      await tx.oTP.deleteMany({ where: { userId: userId } });
+
+      // Finally — safe to delete the user now
+      await tx.user.delete({ where: { id: userId } });
+    });
   }
 
   async validateCredentials({ email, password }) {

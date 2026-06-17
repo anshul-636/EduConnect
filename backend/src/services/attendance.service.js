@@ -1,7 +1,15 @@
 const prisma = require('../utils/prisma');
 
 class AttendanceService {
-  async markBulk(classId, date, records, teacherId) {
+  async markBulk(classId, date, records, teacherId, requesterRole) {
+    if (requesterRole === 'TEACHER') {
+      const cls = await prisma.class.findUnique({ where: { id: classId } });
+      if (!cls) { const e = new Error('Class not found'); e.statusCode = 404; throw e; }
+      if (cls.teacherId !== teacherId) {
+        const e = new Error('Forbidden: you are not the teacher for this class');
+        e.statusCode = 403; throw e;
+      }
+    }
     const d = new Date(date);
     d.setUTCHours(0, 0, 0, 0);
     const ops = records.map(r =>
@@ -28,15 +36,15 @@ class AttendanceService {
     const map = {};
     existing.forEach(a => { map[a.studentId] = a; });
     return enrollments.map(e => ({
-      student:    e.user,
+      student: e.user,
       attendance: map[e.userId] || null,
-      status:     map[e.userId]?.status || 'NOT_MARKED',
+      status: map[e.userId]?.status || 'NOT_MARKED',
     }));
   }
 
   async getMonthly(classId, year, month) {
     const start = new Date(Date.UTC(year, month - 1, 1));
-    const end   = new Date(Date.UTC(year, month, 0, 23, 59, 59));
+    const end = new Date(Date.UTC(year, month, 0, 23, 59, 59));
     const records = await prisma.attendance.findMany({
       where: { classId, date: { gte: start, lte: end } },
       include: { student: { select: { id: true, name: true } } },

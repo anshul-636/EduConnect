@@ -96,7 +96,22 @@ class ClassService {
 
   // ── Timetable ───────────────────────────────────────────────────────────────
 
-  async addTimetableSlot(classId, data) {
+  async _assertTimetableAccess(classId, requesterId, requesterRole) {
+    if (requesterRole === 'SCHOOL' || requesterRole === 'ADMIN') return;
+    if (requesterRole === 'TEACHER') {
+      const cls = await prisma.class.findUnique({ where: { id: classId } });
+      if (!cls) { const e = new Error('Class not found'); e.statusCode = 404; throw e; }
+      if (cls.teacherId !== requesterId) {
+        const e = new Error('Forbidden: you are not the teacher for this class');
+        e.statusCode = 403; throw e;
+      }
+      return;
+    }
+    const e = new Error('Forbidden'); e.statusCode = 403; throw e;
+  }
+
+  async addTimetableSlot(classId, data, requesterId, requesterRole) {
+    await this._assertTimetableAccess(classId, requesterId, requesterRole);
     return prisma.timetableSlot.create({
       data: {
         classId,
@@ -111,7 +126,10 @@ class ClassService {
     });
   }
 
-  async updateTimetableSlot(slotId, data) {
+  async updateTimetableSlot(slotId, data, requesterId, requesterRole) {
+    const slot = await prisma.timetableSlot.findUnique({ where: { id: slotId } });
+    if (!slot) { const e = new Error('Slot not found'); e.statusCode = 404; throw e; }
+    await this._assertTimetableAccess(slot.classId, requesterId, requesterRole);
     return prisma.timetableSlot.update({
       where: { id: slotId },
       data: {
@@ -126,7 +144,10 @@ class ClassService {
     });
   }
 
-  async deleteTimetableSlot(slotId) {
+  async deleteTimetableSlot(slotId, requesterId, requesterRole) {
+    const slot = await prisma.timetableSlot.findUnique({ where: { id: slotId } });
+    if (!slot) { const e = new Error('Slot not found'); e.statusCode = 404; throw e; }
+    await this._assertTimetableAccess(slot.classId, requesterId, requesterRole);
     return prisma.timetableSlot.delete({ where: { id: slotId } });
   }
 
