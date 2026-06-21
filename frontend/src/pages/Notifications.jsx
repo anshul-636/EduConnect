@@ -5,40 +5,40 @@ import Layout from '../components/common/Layout';
 import notificationService from '../services/notificationsService';
 
 const TYPE_ICONS = {
-  EVENT_REGISTERED:   '📅',
-  EVENT_REMINDER:     '⏰',
-  EVENT_RESULT:       '🏆',
-  CERTIFICATE_READY:  '🏅',
+  EVENT_REGISTERED: '📅',
+  EVENT_REMINDER: '⏰',
+  EVENT_RESULT: '🏆',
+  CERTIFICATE_READY: '🏅',
   ASSIGNMENT_CREATED: '📝',
-  ASSIGNMENT_GRADED:  '✅',
-  ANNOUNCEMENT:       '📢',
-  FORUM_REPLY:        '💬',
+  ASSIGNMENT_GRADED: '✅',
+  ANNOUNCEMENT: '📢',
+  FORUM_REPLY: '💬',
 };
 
 const TYPE_COLORS = {
-  EVENT_REGISTERED:   'border-l-blue-500',
-  EVENT_REMINDER:     'border-l-amber-500',
-  EVENT_RESULT:       'border-l-yellow-500',
-  CERTIFICATE_READY:  'border-l-emerald-500',
+  EVENT_REGISTERED: 'border-l-blue-500',
+  EVENT_REMINDER: 'border-l-amber-500',
+  EVENT_RESULT: 'border-l-yellow-500',
+  CERTIFICATE_READY: 'border-l-emerald-500',
   ASSIGNMENT_CREATED: 'border-l-violet-500',
-  ASSIGNMENT_GRADED:  'border-l-green-500',
-  ANNOUNCEMENT:       'border-l-orange-500',
-  FORUM_REPLY:        'border-l-cyan-500',
+  ASSIGNMENT_GRADED: 'border-l-green-500',
+  ANNOUNCEMENT: 'border-l-orange-500',
+  FORUM_REPLY: 'border-l-cyan-500',
 };
 
 function typeLink(n) {
   const d = n.data || {};
-  if (d.eventId)      return `/events/${d.eventId}`;
-  if (d.certId)       return `/certificates`;
+  if (d.eventId) return `/events/${d.eventId}`;
+  if (d.certId) return `/certificates`;
   if (d.assignmentId) return `/assignments/${d.assignmentId}`;
-  if (d.postId)       return `/forum/${d.postId}`;
+  if (d.postId) return `/forum/${d.postId}`;
   return null;
 }
 
 function timeAgo(d) {
   const diff = Date.now() - new Date(d);
   const m = Math.floor(diff / 60000);
-  if (m < 1)  return 'just now';
+  if (m < 1) return 'just now';
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
@@ -46,11 +46,11 @@ function timeAgo(d) {
 }
 
 export default function Notifications() {
-  const [items, setItems]         = useState([]);
-  const [unreadCount, setUnread]  = useState(0);
-  const [loading, setLoading]     = useState(true);
-  const [page, setPage]           = useState(1);
-  const [hasMore, setHasMore]     = useState(false);
+  const [items, setItems] = useState([]);
+  const [unreadCount, setUnread] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [markingAll, setMarkingAll] = useState(false);
 
@@ -60,11 +60,11 @@ export default function Notifications() {
       const r = await notificationService.getAll({ page: p, limit: 20, unreadOnly: uo });
       const d = r.data;
       if (p === 1) setItems(d.items || []);
-      else         setItems(prev => [...prev, ...(d.items || [])]);
+      else setItems(prev => [...prev, ...(d.items || [])]);
       setUnread(d.unreadCount || 0);
       setHasMore((d.pagination?.page || 1) < (d.pagination?.totalPages || 1));
       setPage(p);
-    } catch (_) {}
+    } catch (_) { }
     setLoading(false);
   };
 
@@ -75,7 +75,7 @@ export default function Notifications() {
       await notificationService.markRead(id);
       setItems(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
       setUnread(u => Math.max(0, u - 1));
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const handleMarkAll = async () => {
@@ -84,7 +84,7 @@ export default function Notifications() {
       await notificationService.markAllRead();
       setItems(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnread(0);
-    } catch (_) {}
+    } catch (_) { }
     setMarkingAll(false);
   };
 
@@ -93,7 +93,7 @@ export default function Notifications() {
       await notificationService.delete(id);
       setItems(prev => prev.filter(n => n.id !== id));
       if (!isRead) setUnread(u => Math.max(0, u - 1));
-    } catch (_) {}
+    } catch (_) { }
   };
 
   return (

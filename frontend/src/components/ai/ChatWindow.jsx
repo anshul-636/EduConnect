@@ -17,7 +17,7 @@ const ChatWindow = ({ onSend, onUpload, loading, messages, placeholder = 'Ask an
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
-    
+
     if (editingIndex !== null) {
       // Handle edit (this would require onSend to support resubmitting or just update UI)
       // For now, we'll just send it as a new message to keep it simple and stable
@@ -62,19 +62,18 @@ const ChatWindow = ({ onSend, onUpload, loading, messages, placeholder = 'Ask an
             </div>
           )
         )}
-        
+
         {messages.map((msg, i) => (
           <div key={i} className={`flex group animate-in fade-in slide-in-from-bottom-2 duration-300 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`relative max-w-[85%] rounded-3xl px-5 py-4 text-sm transition-all duration-200 ${
-              msg.role === 'user'
+            <div className={`relative max-w-[85%] rounded-3xl px-5 py-4 text-sm transition-all duration-200 ${msg.role === 'user'
                 ? 'bg-gradient-to-br from-brand-600 to-brand-700 text-white rounded-br-sm shadow-glow-sm'
                 : 'bg-dark-800/80 text-dark-100 rounded-bl-sm border border-dark-700 ring-1 ring-white/5'
-            }`}>
-              
+              }`}>
+
               {/* Actions Overlay */}
               <div className={`absolute top-2 ${msg.role === 'user' ? '-left-10' : '-right-10'} flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200`}>
                 {msg.role === 'assistant' ? (
-                  <button 
+                  <button
                     onClick={() => handleCopy(msg.content, i)}
                     className='p-2 bg-dark-800 border border-dark-700 rounded-xl hover:bg-dark-700 text-dark-400 hover:text-brand-400 transition-colors shadow-lg'
                     title="Copy Answer"
@@ -82,7 +81,7 @@ const ChatWindow = ({ onSend, onUpload, loading, messages, placeholder = 'Ask an
                     {copiedId === i ? <Check size={14} className='text-green-400' /> : <Copy size={14} />}
                   </button>
                 ) : (
-                  <button 
+                  <button
                     onClick={() => handleEdit(msg.content, i)}
                     className='p-2 bg-dark-800 border border-dark-700 rounded-xl hover:bg-dark-700 text-dark-400 hover:text-brand-400 transition-colors shadow-lg'
                     title="Edit Prompt"
@@ -125,7 +124,7 @@ const ChatWindow = ({ onSend, onUpload, loading, messages, placeholder = 'Ask an
             </div>
           </div>
         ))}
-        
+
         {loading && (
           <div className='flex justify-start animate-in fade-in duration-300'>
             <div className='bg-dark-800/80 border border-dark-700 rounded-3xl rounded-bl-sm px-5 py-4'>
@@ -145,9 +144,9 @@ const ChatWindow = ({ onSend, onUpload, loading, messages, placeholder = 'Ask an
       <div className='p-6 bg-dark-900/80 border-t border-dark-800'>
         <form onSubmit={handleSubmit} className='max-w-4xl mx-auto'>
           <div className='relative flex items-end gap-3 bg-dark-800 border border-dark-700 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-brand-500/30 focus-within:border-brand-500 transition-all duration-300 shadow-lg'>
-            
+
             {/* File Upload Button */}
-            <button 
+            <button
               type="button"
               onClick={() => fileInputRef.current.click()}
               className='p-3 text-dark-500 hover:text-brand-400 hover:bg-dark-700 rounded-xl transition-all'
@@ -156,10 +155,10 @@ const ChatWindow = ({ onSend, onUpload, loading, messages, placeholder = 'Ask an
             >
               <Paperclip size={20} />
             </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
               accept=".pdf"
               onChange={handleFileChange}
             />
@@ -185,7 +184,7 @@ const ChatWindow = ({ onSend, onUpload, loading, messages, placeholder = 'Ask an
 
             <div className='flex items-center gap-2 pr-1 pb-1'>
               {editingIndex !== null && (
-                <button 
+                <button
                   type="button"
                   onClick={() => { setEditingIndex(null); setInput(''); }}
                   className='p-3 text-dark-500 hover:text-red-400 transition-all'
@@ -193,8 +192,8 @@ const ChatWindow = ({ onSend, onUpload, loading, messages, placeholder = 'Ask an
                   <Trash2 size={20} />
                 </button>
               )}
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading || !input.trim()}
                 className='p-3 bg-brand-500 text-white rounded-xl hover:bg-brand-600 disabled:opacity-30 disabled:grayscale transition-all shadow-glow-sm'
               >

@@ -5,12 +5,12 @@ import aiService from '../../services/aiService';
 import useAuthStore from '../../store/authStore';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { 
-  Calendar, 
-  Target, 
-  FileText, 
-  Printer, 
-  Sparkles, 
+import {
+  Calendar,
+  Target,
+  FileText,
+  Printer,
+  Sparkles,
   CheckCircle,
   Layout as LayoutIcon,
   Clock,
@@ -59,9 +59,9 @@ const StudyPlanner = () => {
         const raw = res.data || [];
         const role = user?.role || 'STUDENT';
         let filtered = [];
-        
+
         if (role === 'TEACHER') {
-          filtered = raw.filter(e => 
+          filtered = raw.filter(e =>
             /syllabus|lesson|class|curriculum|exam|term|midterm|teacher/i.test(e.title + ' ' + (e.category || ''))
           );
           if (filtered.length === 0) {
@@ -71,7 +71,7 @@ const StudyPlanner = () => {
             ];
           }
         } else if (role === 'SCHOOL') {
-          filtered = raw.filter(e => 
+          filtered = raw.filter(e =>
             /audit|inspection|sports|anniversary|board|parent|meeting|school/i.test(e.title + ' ' + (e.category || ''))
           );
           if (filtered.length === 0) {
@@ -81,7 +81,7 @@ const StudyPlanner = () => {
             ];
           }
         } else if (role === 'ADMIN') {
-          filtered = raw.filter(e => 
+          filtered = raw.filter(e =>
             /upgrade|migration|backup|maintenance|audit|release|admin/i.test(e.title + ' ' + (e.category || ''))
           );
           if (filtered.length === 0) {
@@ -91,7 +91,7 @@ const StudyPlanner = () => {
             ];
           }
         } else { // STUDENT
-          filtered = raw.filter(e => 
+          filtered = raw.filter(e =>
             !/audit|inspection|maintenance|server/i.test(e.title + ' ' + (e.category || ''))
           );
           if (filtered.length === 0) {
@@ -177,9 +177,9 @@ const StudyPlanner = () => {
                   autoFocus
                 />
               ) : (
-                <select 
-                  value={selectedEvent} 
-                  onChange={e => setSelectedEvent(e.target.value)} 
+                <select
+                  value={selectedEvent}
+                  onChange={e => setSelectedEvent(e.target.value)}
                   className='input w-full appearance-none pr-10'
                 >
                   <option value=''>{cfg.placeholder}</option>
@@ -195,8 +195,8 @@ const StudyPlanner = () => {
               </div>
             </div>
 
-            <button 
-              onClick={handleGenerate} 
+            <button
+              onClick={handleGenerate}
               disabled={loading || (isCustom ? !customObjective : !selectedEvent)}
               className='px-8 py-3 bg-gradient-brand text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-50 shadow-glow flex items-center justify-center gap-2 transition-all group'
             >
@@ -215,14 +215,14 @@ const StudyPlanner = () => {
           </div>
 
           <div className='mt-4 flex items-center justify-between'>
-            <button 
+            <button
               onClick={() => setIsCustom(!isCustom)}
               className='text-xs font-bold text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1'
             >
               <Sparkles size={14} />
               {isCustom ? "Back to Preset Events" : "Switch to Custom Objective"}
             </button>
-            
+
             {loading && (
               <div className='flex items-center gap-2 text-brand-100 text-xs italic animate-pulse'>
                 <Clock className='text-brand-400 animate-spin-slow' size={14} />
@@ -249,7 +249,7 @@ const StudyPlanner = () => {
                     </div>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => window.print()}
                   className='p-3 bg-dark-700 hover:bg-dark-600 text-dark-200 rounded-xl transition-colors flex items-center gap-2 text-sm font-bold'
                 >
@@ -260,21 +260,21 @@ const StudyPlanner = () => {
 
               {/* Plan Content */}
               <div className='p-8 print:p-0 markdown-content'>
-                <ReactMarkdown 
+                <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    h3: ({node, ...props}) => <h3 className='text-brand-400 font-bold text-lg mt-8 mb-4 border-l-4 border-brand-500 pl-4 uppercase tracking-tight' {...props} />,
-                    table: ({node, ...props}) => (
+                    h3: ({ node, ...props }) => <h3 className='text-brand-400 font-bold text-lg mt-8 mb-4 border-l-4 border-brand-500 pl-4 uppercase tracking-tight' {...props} />,
+                    table: ({ node, ...props }) => (
                       <div className='overflow-x-auto my-6 rounded-xl border border-white/5'>
                         <table className='w-full text-left text-sm' {...props} />
                       </div>
                     ),
-                    thead: ({node, ...props}) => <thead className='bg-dark-800 text-dark-100 uppercase text-[10px] tracking-widest' {...props} />,
-                    th: ({node, ...props}) => <th className='px-4 py-3 font-bold' {...props} />,
-                    td: ({node, ...props}) => <td className='px-4 py-4 border-t border-white/5 text-dark-200 leading-relaxed' {...props} />,
-                    strong: ({node, ...props}) => <strong className='text-brand-300 font-bold' {...props} />,
-                    ul: ({node, ...props}) => <ul className='space-y-3 my-4' {...props} />,
-                    li: ({node, ...props}) => (
+                    thead: ({ node, ...props }) => <thead className='bg-dark-800 text-dark-100 uppercase text-[10px] tracking-widest' {...props} />,
+                    th: ({ node, ...props }) => <th className='px-4 py-3 font-bold' {...props} />,
+                    td: ({ node, ...props }) => <td className='px-4 py-4 border-t border-white/5 text-dark-200 leading-relaxed' {...props} />,
+                    strong: ({ node, ...props }) => <strong className='text-brand-300 font-bold' {...props} />,
+                    ul: ({ node, ...props }) => <ul className='space-y-3 my-4' {...props} />,
+                    li: ({ node, ...props }) => (
                       <li className='flex items-start gap-2 text-dark-300'>
                         <div className='mt-2.5 w-1.5 h-1.5 rounded-full bg-brand-500 flex-shrink-0' />
                         <span {...props} />

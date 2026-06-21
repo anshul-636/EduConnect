@@ -6,11 +6,11 @@ import assignmentService from '../services/assignmentService';
 import useAuthStore from '../store/authStore';
 
 const statusCls = {
-  SUBMITTED:'text-blue-300 bg-blue-900/30 border-blue-700/50',
-  RESUBMITTED:'text-cyan-300 bg-cyan-900/30 border-cyan-700/50',
-  GRADED:'text-emerald-300 bg-emerald-900/30 border-emerald-700/50',
-  LATE:'text-orange-300 bg-orange-900/30 border-orange-700/50',
-  NOT_SUBMITTED:'text-dark-400 bg-dark-800 border-dark-700',
+  SUBMITTED: 'text-blue-300 bg-blue-900/30 border-blue-700/50',
+  RESUBMITTED: 'text-cyan-300 bg-cyan-900/30 border-cyan-700/50',
+  GRADED: 'text-emerald-300 bg-emerald-900/30 border-emerald-700/50',
+  LATE: 'text-orange-300 bg-orange-900/30 border-orange-700/50',
+  NOT_SUBMITTED: 'text-dark-400 bg-dark-800 border-dark-700',
 };
 
 export default function AssignmentDetail() {
@@ -34,7 +34,7 @@ export default function AssignmentDetail() {
     try {
       const r = await assignmentService.getById(id);
       setAssignment(r.data.data);
-    } catch (_) {}
+    } catch (_) { }
     setLoading(false);
   };
 
@@ -64,7 +64,7 @@ export default function AssignmentDetail() {
 
   if (loading) return (
     <Layout><div className="max-w-3xl mx-auto space-y-3">
-      {[...Array(4)].map((_,i) => <div key={i} className="h-24 bg-dark-800 rounded-2xl animate-pulse"/>)}
+      {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-dark-800 rounded-2xl animate-pulse" />)}
     </div></Layout>
   );
 
@@ -81,7 +81,7 @@ export default function AssignmentDetail() {
     <Layout>
       <div className="max-w-3xl mx-auto">
         <Link to="/assignments" className="inline-flex items-center gap-2 text-dark-400 hover:text-dark-100 text-sm mb-5 transition-colors">
-          <ArrowLeft size={14}/> Back to Assignments
+          <ArrowLeft size={14} /> Back to Assignments
         </Link>
 
         {/* Assignment card */}
@@ -90,9 +90,9 @@ export default function AssignmentDetail() {
             <div className="flex-1 min-w-0">
               <h1 className="font-display font-bold text-xl text-dark-50">{assignment.title}</h1>
               <p className="text-dark-400 text-sm mt-1 flex items-center gap-3 flex-wrap">
-                <span className="flex items-center gap-1"><User size={12}/> {assignment.teacher?.name}</span>
-                <span className="flex items-center gap-1"><Calendar size={12}/> Due {dueDate.toLocaleString()}</span>
-                <span className="flex items-center gap-1"><Star size={12}/> Max {assignment.maxScore} pts</span>
+                <span className="flex items-center gap-1"><User size={12} /> {assignment.teacher?.name}</span>
+                <span className="flex items-center gap-1"><Calendar size={12} /> Due {dueDate.toLocaleString()}</span>
+                <span className="flex items-center gap-1"><Star size={12} /> Max {assignment.maxScore} pts</span>
               </p>
             </div>
             {isPast && <span className="text-xs px-3 py-1 rounded-full bg-red-900/30 text-red-300 border border-red-700/50 font-semibold">Deadline Passed</span>}
@@ -110,7 +110,7 @@ export default function AssignmentDetail() {
           {assignment.resource && (
             <a href={assignment.resource.fileUrl} target="_blank" rel="noreferrer"
               className="inline-flex items-center gap-2 mt-4 text-sm text-brand-400 hover:text-brand-300 bg-brand-900/20 border border-brand-700/30 px-3 py-2 rounded-xl transition-colors">
-              <FileText size={14}/> Reference: {assignment.resource.title}
+              <FileText size={14} /> Reference: {assignment.resource.title}
             </a>
           )}
         </div>
@@ -119,17 +119,17 @@ export default function AssignmentDetail() {
         {!isTeacher && (
           <div className="bg-dark-800 border border-dark-700 rounded-2xl p-6 mb-5">
             <h2 className="font-semibold text-dark-100 mb-4 flex items-center gap-2">
-              <Send size={16} className="text-violet-400"/> My Submission
+              <Send size={16} className="text-violet-400" /> My Submission
             </h2>
 
             {mySubmission ? (
               <div>
                 <div className="flex items-center gap-3 mb-3 flex-wrap">
-                  <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${statusCls[mySubmission.status]||statusCls.NOT_SUBMITTED}`}>
+                  <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${statusCls[mySubmission.status] || statusCls.NOT_SUBMITTED}`}>
                     {mySubmission.status}
                   </span>
                   <span className="text-dark-500 text-xs flex items-center gap-1">
-                    <Clock size={11}/> {new Date(mySubmission.submittedAt).toLocaleString()}
+                    <Clock size={11} /> {new Date(mySubmission.submittedAt).toLocaleString()}
                   </span>
                   {mySubmission.score != null && (
                     <span className="text-emerald-300 font-bold text-sm ml-auto">
@@ -143,7 +143,7 @@ export default function AssignmentDetail() {
                 {mySubmission.fileUrl && (
                   <a href={mySubmission.fileUrl} target="_blank" rel="noreferrer"
                     className="inline-flex items-center gap-2 mb-3 text-sm text-brand-400 hover:text-brand-300 bg-brand-900/20 border border-brand-700/30 px-3 py-2 rounded-xl transition-colors">
-                    <Paperclip size={13}/> View submitted file
+                    <Paperclip size={13} /> View submitted file
                   </a>
                 )}
                 {mySubmission.feedback && (
@@ -165,31 +165,31 @@ export default function AssignmentDetail() {
                 <textarea value={content} onChange={e => setContent(e.target.value)}
                   placeholder="Write your answer here… (optional if attaching a file)"
                   rows={5}
-                  className="w-full bg-dark-900 border border-dark-700 rounded-xl px-4 py-3 text-sm text-dark-100 placeholder:text-dark-500 focus:outline-none focus:border-violet-500 resize-none"/>
+                  className="w-full bg-dark-900 border border-dark-700 rounded-xl px-4 py-3 text-sm text-dark-100 placeholder:text-dark-500 focus:outline-none focus:border-violet-500 resize-none" />
 
                 {/* File attachment */}
                 <div className="flex items-center gap-3">
                   <button type="button" onClick={() => fileInputRef.current?.click()}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl border border-dark-700 text-dark-300 hover:text-dark-100 hover:border-dark-500 text-sm transition-colors">
-                    <Paperclip size={14}/> Attach file
+                    <Paperclip size={14} /> Attach file
                   </button>
                   {file && (
                     <div className="flex items-center gap-2 text-xs text-dark-300 bg-dark-900 border border-dark-700 rounded-xl px-3 py-2">
-                      <FileText size={12} className="text-brand-400"/>
+                      <FileText size={12} className="text-brand-400" />
                       <span className="max-w-[200px] truncate">{file.name}</span>
-                      <button onClick={() => { setFile(null); if(fileInputRef.current) fileInputRef.current.value=''; }}
+                      <button onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
                         className="text-dark-500 hover:text-red-400 transition-colors ml-1">
-                        <X size={12}/>
+                        <X size={12} />
                       </button>
                     </div>
                   )}
                   <input ref={fileInputRef} type="file" className="hidden"
-                    onChange={e => setFile(e.target.files[0] || null)}/>
+                    onChange={e => setFile(e.target.files[0] || null)} />
                 </div>
 
                 <button onClick={handleSubmit} disabled={submitting || (!content.trim() && !file)}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-semibold text-sm bg-gradient-to-r from-violet-600 to-purple-600 hover:opacity-90 transition-opacity disabled:opacity-50">
-                  <Send size={14}/> {submitting ? 'Submitting…' : mySubmission ? 'Resubmit' : 'Submit'}
+                  <Send size={14} /> {submitting ? 'Submitting…' : mySubmission ? 'Resubmit' : 'Submit'}
                 </button>
               </div>
             )}
@@ -200,7 +200,7 @@ export default function AssignmentDetail() {
         {isTeacher && (
           <div className="bg-dark-800 border border-dark-700 rounded-2xl p-6">
             <h2 className="font-semibold text-dark-100 mb-4 flex items-center gap-2">
-              <CheckCircle2 size={16} className="text-emerald-400"/> Submissions
+              <CheckCircle2 size={16} className="text-emerald-400" /> Submissions
               <span className="text-dark-500 text-sm font-normal">({submissions.length})</span>
             </h2>
             {submissions.length === 0 ? (
@@ -221,7 +221,7 @@ export default function AssignmentDetail() {
                             <p className="text-dark-500 text-xs">{new Date(sub.submittedAt).toLocaleString()}</p>
                           </div>
                         </div>
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${statusCls[sub.status]||statusCls.NOT_SUBMITTED}`}>
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${statusCls[sub.status] || statusCls.NOT_SUBMITTED}`}>
                           {sub.status}
                         </span>
                       </div>
@@ -231,23 +231,23 @@ export default function AssignmentDetail() {
                       {sub.fileUrl && (
                         <a href={sub.fileUrl} target="_blank" rel="noreferrer"
                           className="inline-flex items-center gap-2 mb-3 text-xs text-brand-400 hover:text-brand-300 bg-brand-900/20 border border-brand-700/30 px-3 py-1.5 rounded-xl transition-colors">
-                          <Paperclip size={12}/> View submission file
+                          <Paperclip size={12} /> View submission file
                         </a>
                       )}
                       {/* Grade row */}
                       <div className="flex items-center gap-2 flex-wrap">
                         <input type="number" placeholder="Score" min={0} max={assignment.maxScore}
                           value={g.score}
-                          onChange={e => setGradeMap(p => ({...p,[sub.id]:{...g,score:e.target.value}}))}
-                          className="w-24 bg-dark-900 border border-dark-700 rounded-xl px-3 py-1.5 text-sm text-dark-100 focus:outline-none focus:border-emerald-500"/>
+                          onChange={e => setGradeMap(p => ({ ...p, [sub.id]: { ...g, score: e.target.value } }))}
+                          className="w-24 bg-dark-900 border border-dark-700 rounded-xl px-3 py-1.5 text-sm text-dark-100 focus:outline-none focus:border-emerald-500" />
                         <span className="text-dark-500 text-xs">/ {assignment.maxScore}</span>
                         <input type="text" placeholder="Feedback (optional)"
                           value={g.feedback}
-                          onChange={e => setGradeMap(p => ({...p,[sub.id]:{...g,feedback:e.target.value}}))}
-                          className="flex-1 min-w-[160px] bg-dark-900 border border-dark-700 rounded-xl px-3 py-1.5 text-sm text-dark-100 placeholder:text-dark-500 focus:outline-none focus:border-emerald-500"/>
-                        <button onClick={() => handleGrade(sub.id)} disabled={gradingId===sub.id||!g.score}
+                          onChange={e => setGradeMap(p => ({ ...p, [sub.id]: { ...g, feedback: e.target.value } }))}
+                          className="flex-1 min-w-[160px] bg-dark-900 border border-dark-700 rounded-xl px-3 py-1.5 text-sm text-dark-100 placeholder:text-dark-500 focus:outline-none focus:border-emerald-500" />
+                        <button onClick={() => handleGrade(sub.id)} disabled={gradingId === sub.id || !g.score}
                           className="px-4 py-1.5 rounded-xl text-white text-xs font-semibold bg-emerald-700 hover:bg-emerald-600 transition-colors disabled:opacity-50">
-                          {gradingId===sub.id ? 'Saving…' : sub.status==='GRADED' ? 'Update' : 'Grade'}
+                          {gradingId === sub.id ? 'Saving…' : sub.status === 'GRADED' ? 'Update' : 'Grade'}
                         </button>
                       </div>
                     </div>

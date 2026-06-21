@@ -5,22 +5,22 @@ import notificationService from '../../services/notificationsService';
 import useAuthStore from '../../store/authStore';
 
 const TYPE_ICONS = {
-  EVENT_REGISTERED:  '📅',
-  EVENT_REMINDER:    '⏰',
-  EVENT_RESULT:      '🏆',
+  EVENT_REGISTERED: '📅',
+  EVENT_REMINDER: '⏰',
+  EVENT_RESULT: '🏆',
   CERTIFICATE_READY: '🏅',
-  ASSIGNMENT_CREATED:'📝',
+  ASSIGNMENT_CREATED: '📝',
   ASSIGNMENT_GRADED: '✅',
-  ANNOUNCEMENT:      '📢',
-  FORUM_REPLY:       '💬',
+  ANNOUNCEMENT: '📢',
+  FORUM_REPLY: '💬',
 };
 
 const typeLink = (n) => {
   const d = n.data || {};
-  if (d.eventId)      return `/events/${d.eventId}`;
-  if (d.certId)       return `/certificates`;
+  if (d.eventId) return `/events/${d.eventId}`;
+  if (d.certId) return `/certificates`;
   if (d.assignmentId) return `/assignments/${d.assignmentId}`;
-  if (d.postId)       return `/forum/${d.postId}`;
+  if (d.postId) return `/forum/${d.postId}`;
   return null;
 };
 
@@ -28,7 +28,7 @@ const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:3000';
 
 export default function NotificationBell() {
   const { user } = useAuthStore();
-  const [open, setOpen]   = useState(false);
+  const [open, setOpen] = useState(false);
   const [items, setItems] = useState([]);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -71,7 +71,7 @@ export default function NotificationBell() {
             setItems(prev => [notif, ...prev].slice(0, 15));
             setUnread(u => u + 1);
           }
-        } catch (_) {}
+        } catch (_) { }
       };
 
       ws.onclose = () => {
@@ -121,7 +121,7 @@ export default function NotificationBell() {
       await notificationService.markRead(id);
       setItems(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
       setUnread(u => Math.max(0, u - 1));
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const handleMarkAllRead = async () => {
@@ -129,16 +129,16 @@ export default function NotificationBell() {
       await notificationService.markAllRead();
       setItems(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnread(0);
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const timeAgo = (dateStr) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60_000);
-    if (mins < 1)  return 'just now';
+    if (mins < 1) return 'just now';
     if (mins < 60) return `${mins}m ago`;
     const hrs = Math.floor(mins / 60);
-    if (hrs < 24)  return `${hrs}h ago`;
+    if (hrs < 24) return `${hrs}h ago`;
     return `${Math.floor(hrs / 24)}d ago`;
   };
 
@@ -194,7 +194,7 @@ export default function NotificationBell() {
                 <Wrapper
                   key={n.id}
                   to={link || undefined}
-                  onClick={() => !n.isRead && handleMarkRead({ preventDefault: ()=>{}, stopPropagation: ()=>{} }, n.id)}
+                  onClick={() => !n.isRead && handleMarkRead({ preventDefault: () => { }, stopPropagation: () => { } }, n.id)}
                   className={`flex gap-3 px-4 py-3 border-b border-dark-700/50 hover:bg-dark-700/50 transition-colors cursor-pointer ${!n.isRead ? 'bg-brand-950/20' : ''}`}
                 >
                   <span className="text-lg flex-shrink-0 mt-0.5">{TYPE_ICONS[n.type] || '🔔'}</span>
@@ -206,7 +206,7 @@ export default function NotificationBell() {
                   {!n.isRead && (
                     <button onClick={(e) => handleMarkRead(e, n.id)}
                       className="flex-shrink-0 w-2 h-2 mt-2 bg-brand-500 rounded-full hover:bg-brand-400"
-                      aria-label="Mark as read"/>
+                      aria-label="Mark as read" />
                   )}
                 </Wrapper>
               );

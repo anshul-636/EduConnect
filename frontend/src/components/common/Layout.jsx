@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, GraduationCap, CalendarDays, BookOpen, Trophy,
@@ -411,9 +411,6 @@ export default function Layout({ children }) {
     setAmbientColor(SECTION_COLORS[section] || SECTION_COLORS.dashboard);
   }, [location.pathname]);
 
-  // Close the mobile drawer whenever the route changes
-  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
-
   // Scroll tracking for within-page colour shift
   useEffect(() => {
     const mainEl = document.getElementById('main-scroll');
@@ -477,7 +474,6 @@ export default function Layout({ children }) {
 
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
       <aside
-        className={`ec-sidebar ${mobileOpen ? 'ec-sidebar-mobile-open' : ''}`}
         style={{
           position: 'relative', zIndex: 41,
           width: sidebarOpen ? '240px' : '64px',
@@ -508,7 +504,7 @@ export default function Layout({ children }) {
             flexShrink: 0,
           }}>E</div>
           {sidebarOpen && (
-            <div style={{ overflow: 'hidden', flex: 1 }}>
+            <div style={{ overflow: 'hidden' }}>
               <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: '700', fontSize: '15px', color: '#f1f5f9', lineHeight: 1.2, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
                 EduConnect
               </div>
@@ -517,26 +513,11 @@ export default function Layout({ children }) {
               </div>
             </div>
           )}
-          {/* Mobile close button */}
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="ec-mobile-close"
-            style={{
-              display: 'none',
-              width: '28px', height: '28px', borderRadius: '8px',
-              background: 'rgba(255,255,255,0.06)', border: 'none',
-              color: '#94a3b8', cursor: 'pointer',
-              alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}
-          >
-            <X size={14} />
-          </button>
         </div>
 
-        {/* Toggle button (desktop only) */}
+        {/* Toggle button */}
         <button
           onClick={() => setSidebarOpen(p => !p)}
-          className="ec-sidebar-toggle"
           style={{
             position: 'absolute', top: '20px', right: '-12px',
             width: '24px', height: '24px', borderRadius: '50%',
@@ -575,7 +556,6 @@ export default function Layout({ children }) {
                     <Link
                       key={to + label}
                       to={to}
-                      onClick={() => setMobileOpen(false)}
                       title={!sidebarOpen ? label : undefined}
                       style={{
                         display: 'flex', alignItems: 'center',
@@ -693,21 +673,6 @@ export default function Layout({ children }) {
           zIndex: 30,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setMobileOpen(true)}
-              className="ec-mobile-menu-btn"
-              style={{
-                display: 'none',
-                width: '32px', height: '32px', borderRadius: '8px',
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
-                color: '#94a3b8', cursor: 'pointer',
-                alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}
-            >
-              <Menu size={15} />
-            </button>
-
             <button
               onClick={() => navigate(-1)}
               style={{
@@ -721,7 +686,7 @@ export default function Layout({ children }) {
               onMouseLeave={e => { e.currentTarget.style.color = '#475569'; e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent'; }}
             >
               <ArrowLeft size={13} />
-              <span className="ec-back-label">Back</span>
+              <span>Back</span>
             </button>
 
             {/* Ambient section indicator */}
@@ -761,7 +726,7 @@ export default function Layout({ children }) {
               }}>
                 {initials}
               </div>
-              <span className="ec-topbar-name" style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '500' }}>{user?.name?.split(' ')[0]}</span>
+              <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '500' }}>{user?.name?.split(' ')[0]}</span>
               <span style={{
                 fontSize: '10px', fontWeight: '700', padding: '2px 8px', borderRadius: '20px',
                 background: sectionAccent.bg, color: sectionAccent.dot,
@@ -966,22 +931,6 @@ export default function Layout({ children }) {
         @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes spin    { to { transform: rotate(360deg); } }
-
-        /* ── Mobile drawer behaviour ──────────────────────────────────────── */
-        @media (max-width: 860px) {
-          .ec-sidebar {
-            position: fixed !important;
-            top: 0; bottom: 0; left: 0;
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.16,1,0.3,1) !important;
-          }
-          .ec-sidebar-mobile-open { transform: translateX(0); }
-          .ec-sidebar-toggle { display: none !important; }
-          .ec-mobile-close { display: flex !important; }
-          .ec-mobile-menu-btn { display: flex !important; }
-          .ec-back-label { display: none; }
-          .ec-topbar-name { display: none; }
-        }
       `}</style>
     </div>
   );

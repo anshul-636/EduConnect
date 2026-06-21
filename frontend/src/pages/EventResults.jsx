@@ -58,9 +58,9 @@ const EventResults = () => {
       const results = registrations.map(r => ({ registrationId: r.id, score: parseFloat(scores[r.id]) || 0 }));
       const data = await eventService.submitResults(id, results);
       setLeaderboard(data.data);
-      
+
       let successMsg = 'Results published! Leaderboard is now live.';
-      
+
       if (autoDispatch) {
         setDispatching(true);
         try {
@@ -75,7 +75,7 @@ const EventResults = () => {
           setDispatching(false);
         }
       }
-      
+
       setMsg({ text: successMsg, ok: true });
       setTab('leaderboard');
     } catch (err) { setMsg({ text: err.response?.data?.message || 'Failed.', ok: false }); }
@@ -199,12 +199,12 @@ const EventResults = () => {
                 </button>
               </div>
             )}
-            
+
             {dispatched && (
-               <div className='card bg-green-500/5 border border-green-500/20 py-3 flex items-center gap-3'>
-                 <span className='text-xl'>✅</span>
-                 <p className='text-sm text-green-400 font-medium'>All certificates successfully generated and dispatched to participants.</p>
-               </div>
+              <div className='card bg-green-500/5 border border-green-500/20 py-3 flex items-center gap-3'>
+                <span className='text-xl'>✅</span>
+                <p className='text-sm text-green-400 font-medium'>All certificates successfully generated and dispatched to participants.</p>
+              </div>
             )}
 
             <div className='card'>

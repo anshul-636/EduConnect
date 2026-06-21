@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Layout from '../components/common/Layout';
 import resourceService from '../services/resourceService';
 import useAuthStore from '../store/authStore';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 const TYPES = ['', 'PDF', 'VIDEO', 'LINK', 'NOTES'];
 const DIFFICULTIES = ['', 'BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
@@ -42,6 +43,7 @@ function useDebounce(value, delay) {
 
 export default function Resources() {
   const { user } = useAuthStore();
+  useScrollReveal();
 
   // Filter state
   const [searchInput, setSearchInput] = useState('');
@@ -140,7 +142,7 @@ export default function Resources() {
     <Layout>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 reveal">
           <div>
             <h1 className="font-display font-bold text-2xl text-dark-50">Resource Library</h1>
             <p className="text-dark-400 mt-1">
@@ -158,7 +160,7 @@ export default function Resources() {
         </div>
 
         {/* FIXED: Search bar — now debounced, triggers on every keystroke after 400ms */}
-        <div className="flex gap-3 mb-4 flex-wrap">
+        <div className="flex gap-3 mb-4 flex-wrap reveal delay-1">
           <div className="relative flex-1 min-w-[200px]">
             <input
               type="text"
@@ -250,11 +252,11 @@ export default function Resources() {
         {/* Resource grid */}
         {!loading && !error && resources.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {resources.map((resource) => (
+            {resources.map((resource, i) => (
               <Link
                 key={resource.id}
                 to={`/resources/${resource.id}`}
-                className="group block rounded-2xl bg-dark-800 border border-dark-700 hover:border-brand-500/50 transition-all p-5"
+                className={`group block rounded-2xl bg-dark-800 border border-dark-700 hover:border-brand-500/50 transition-all p-5 reveal delay-${Math.min((i % 8) + 1, 8)}`}
               >
                 <div className="flex items-start justify-between mb-3">
                   <TypeBadge type={resource.type} />
@@ -285,9 +287,8 @@ export default function Resources() {
                     <button
                       onClick={(e) => handleUpvote(e, resource.id)}
                       disabled={!!upvotingId}
-                      className={`flex items-center gap-1 transition-colors hover:text-brand-400 ${
-                        upvotedIds.has(resource.id) ? 'text-brand-400' : ''
-                      }`}
+                      className={`flex items-center gap-1 transition-colors hover:text-brand-400 ${upvotedIds.has(resource.id) ? 'text-brand-400' : ''
+                        }`}
                     >
                       <span>{upvotedIds.has(resource.id) ? '👍' : '👍'}</span>
                       <span>{resource.upvotes ?? 0}</span>
@@ -325,11 +326,10 @@ export default function Resources() {
                   <button
                     key={p}
                     onClick={() => setPage(p)}
-                    className={`w-9 h-9 text-sm rounded-xl border transition-colors ${
-                      p === page
+                    className={`w-9 h-9 text-sm rounded-xl border transition-colors ${p === page
                         ? 'bg-brand-600 border-brand-500 text-white'
                         : 'border-dark-600 text-dark-300 hover:bg-dark-700'
-                    }`}
+                      }`}
                   >
                     {p}
                   </button>

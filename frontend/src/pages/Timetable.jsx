@@ -3,6 +3,7 @@ import { Plus, X, Clock, BookOpen, Trash2 } from 'lucide-react';
 import Layout from '../components/common/Layout';
 import classService from '../services/classService';
 import useAuthStore from '../store/authStore';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 const DAYS = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -153,12 +154,13 @@ export default function Timetable() {
 
   // Count unique subjects
   const subjects = [...new Set(slots.map(s => s.subject))];
+  useScrollReveal();
 
   return (
     <Layout>
       <div className="max-w-full">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3 reveal">
           <div>
             <h1 className="font-display font-bold text-2xl text-dark-50 flex items-center gap-2">
               <Clock className="text-brand-400" size={24} /> Weekly Timetable
@@ -190,7 +192,7 @@ export default function Timetable() {
 
         {/* Subject legend */}
         {subjects.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-2 mb-4 reveal delay-1">
             {subjects.map(sub => {
               const c = getSubjectColor(sub);
               return (
@@ -214,7 +216,7 @@ export default function Timetable() {
           </div>
         ) : (
           /* Timetable grid */
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto reveal-scale delay-2">
             <div className="min-w-[700px]">
               {/* Day headers */}
               <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: '60px repeat(6, 1fr)' }}>

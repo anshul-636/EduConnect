@@ -4,6 +4,7 @@ import Layout from '../components/common/Layout';
 import attendanceService from '../services/attendanceService';
 import classService from '../services/classService';
 import useAuthStore from '../store/authStore';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 const STATUS_CONFIG = {
   PRESENT: { label: 'Present', bg: 'bg-emerald-900/60 border-emerald-500/60 text-emerald-300', dot: 'bg-emerald-400' },
@@ -57,10 +58,12 @@ function StudentAttendanceView() {
   const handleClassChange = (id) => { setSelectedClass(id); loadReport(id); };
   const selectedCls = classes.find(c => c.id === selectedClass);
 
+  useScrollReveal();
+
   return (
     <Layout>
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3 reveal">
           <div>
             <h1 className="font-display font-bold text-2xl text-dark-50 flex items-center gap-2">
               <UserCheck className="text-emerald-400" size={24} /> My Attendance
@@ -101,15 +104,15 @@ function StudentAttendanceView() {
                 { label: 'Present', val: report.counts.PRESENT || 0, color: 'text-emerald-300', bg: 'bg-emerald-900/30 border border-emerald-900/50' },
                 { label: 'Absent', val: report.counts.ABSENT || 0, color: 'text-red-300', bg: 'bg-red-900/30 border border-red-900/50' },
                 { label: 'Late', val: report.counts.LATE || 0, color: 'text-amber-300', bg: 'bg-amber-900/30 border border-amber-900/50' },
-              ].map(({ label, val, color, bg }) => (
-                <div key={label} className={`rounded-2xl p-4 ${bg}`}>
+              ].map(({ label, val, color, bg }, i) => (
+                <div key={label} className={`rounded-2xl p-4 reveal delay-${i + 1} ${bg}`}>
                   <p className="text-dark-500 text-xs font-medium uppercase tracking-wide">{label}</p>
                   <p className={`font-display font-bold text-2xl mt-1 ${color}`}>{val}</p>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center gap-3 mb-6 px-4 py-3 bg-dark-800 border border-dark-700 rounded-2xl">
+            <div className="flex items-center gap-3 mb-6 px-4 py-3 bg-dark-800 border border-dark-700 rounded-2xl reveal delay-2">
               <div className="flex-1 h-2 bg-dark-700 rounded-full overflow-hidden">
                 <div className={`h-full rounded-full ${report.percentage >= 75 ? 'bg-emerald-500' : report.percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
                   style={{ width: `${report.percentage}%` }} />
@@ -124,10 +127,10 @@ function StudentAttendanceView() {
               <p className="text-dark-500 text-sm text-center py-8">No records yet.</p>
             ) : (
               <div className="space-y-2">
-                {report.records.map(rec => {
+                {report.records.map((rec, i) => {
                   const cfg = STATUS_CONFIG[rec.status] || STATUS_CONFIG.NOT_MARKED;
                   return (
-                    <div key={rec.id} className={`flex items-center justify-between gap-4 p-3 rounded-xl border ${cfg.bg}`}>
+                    <div key={rec.id} className={`flex items-center justify-between gap-4 p-3 rounded-xl border reveal-left delay-${Math.min((i % 8) + 1, 8)} ${cfg.bg}`}>
                       <span className="text-dark-200 text-sm">
                         {new Date(rec.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
@@ -240,11 +243,12 @@ function StaffAttendanceView() {
   const late = Object.values(marked).filter(s => s === 'LATE').length;
 
   const selectedCls = classes.find(c => c.id === selectedClass);
+  useScrollReveal();
 
   return (
     <Layout>
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3 reveal">
           <div>
             <h1 className="font-display font-bold text-2xl text-dark-50 flex items-center gap-2">
               <UserCheck className="text-emerald-400" size={24} /> Attendance
@@ -273,7 +277,7 @@ function StaffAttendanceView() {
 
         {view === 'mark' ? (
           <>
-            <div className="flex items-center gap-3 mb-5">
+            <div className="flex items-center gap-3 mb-5 reveal delay-1">
               <button onClick={() => shiftDate(-1)} className="w-9 h-9 flex items-center justify-center rounded-xl bg-dark-800 border border-dark-700 text-dark-300 hover:bg-dark-700 transition-all">
                 <ChevronLeft size={16} />
               </button>
@@ -295,8 +299,8 @@ function StaffAttendanceView() {
                 { label: 'Present', val: present, color: 'text-emerald-300', bg: 'bg-emerald-900/30 border border-emerald-900/50' },
                 { label: 'Absent', val: absent, color: 'text-red-300', bg: 'bg-red-900/30 border border-red-900/50' },
                 { label: 'Late', val: late, color: 'text-amber-300', bg: 'bg-amber-900/30 border border-amber-900/50' },
-              ].map(({ label, val, color, bg }) => (
-                <div key={label} className={`rounded-2xl p-4 ${bg}`}>
+              ].map(({ label, val, color, bg }, i) => (
+                <div key={label} className={`rounded-2xl p-4 reveal delay-${i + 2} ${bg}`}>
                   <p className="text-dark-500 text-xs font-medium uppercase tracking-wide">{label}</p>
                   <p className={`font-display font-bold text-2xl mt-1 ${color}`}>{val}</p>
                   {label !== 'Total' && total > 0 && (
@@ -341,7 +345,7 @@ function StaffAttendanceView() {
                   return (
                     <div key={student.id}
                       onClick={() => cycleStatus(student.id)}
-                      className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer hover:scale-[1.005] ${cfg.bg}`}>
+                      className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer hover:scale-[1.005] reveal-left delay-${Math.min((idx % 8) + 1, 8)} ${cfg.bg}`}>
                       <span className="text-dark-500 text-xs font-mono w-5 text-center">{idx + 1}</span>
                       <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br from-brand-600 to-purple-600 flex-shrink-0">
                         {student.name?.charAt(0).toUpperCase()}

@@ -27,7 +27,7 @@ const Navbar = () => {
         </Link>
         {user && (
           <div className='flex items-center gap-1'>
-            {[['Schools','/schools'],['Events','/events'],['Resources','/resources'],['Leaderboard','/leaderboard'],['Forum','/forum']].map(([label,to]) => (
+            {[['Schools', '/schools'], ['Events', '/events'], ['Resources', '/resources'], ['Leaderboard', '/leaderboard'], ['Forum', '/forum']].map(([label, to]) => (
               <Link key={to} to={to} className='text-dark-400 hover:text-dark-100 text-sm px-3 py-1.5 rounded-lg hover:bg-dark-800 transition-all duration-150'>
                 {label}
               </Link>

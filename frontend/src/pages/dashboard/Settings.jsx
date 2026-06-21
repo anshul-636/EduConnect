@@ -79,11 +79,11 @@ const Settings = () => {
               <div>
                 <h3 className='font-semibold text-dark-50'>Temporarily Disable Account</h3>
                 <p className='text-sm text-dark-400 max-w-md'>
-                  This will hide your profile and deactivate your access. All your data remains safe, 
+                  This will hide your profile and deactivate your access. All your data remains safe,
                   and you can re-activate it anytime just by logging in again.
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowConfirm('disable')}
                 className='px-6 py-2.5 bg-dark-800 border border-dark-700 text-dark-200 rounded-xl font-medium hover:bg-dark-700 transition-colors whitespace-nowrap'
               >
@@ -98,11 +98,11 @@ const Settings = () => {
               <div>
                 <h3 className='font-semibold text-red-400'>Permanently Delete Account</h3>
                 <p className='text-sm text-dark-400 max-w-md'>
-                  Everything—including your certificates, event history, and posts—will be wiped clean. 
+                  Everything—including your certificates, event history, and posts—will be wiped clean.
                   This action is irreversible. You can rejoin with the same email later, but you'll start fresh.
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowConfirm('delete')}
                 className='px-6 py-2.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl font-medium hover:bg-red-500 hover:text-white transition-all whitespace-nowrap'
               >
@@ -122,24 +122,23 @@ const Settings = () => {
               Are you absolutely sure?
             </h3>
             <p className='text-dark-400 text-center mb-8'>
-              {showConfirm === 'delete' 
-                ? "This will erase your entire journey on EduConnect. There is no 'undo' for this." 
+              {showConfirm === 'delete'
+                ? "This will erase your entire journey on EduConnect. There is no 'undo' for this."
                 : "You can come back anytime, but for now, we'll keep your account on ice."}
             </p>
             <div className='grid grid-cols-2 gap-4'>
-              <button 
+              <button
                 disabled={loading}
                 onClick={() => setShowConfirm(null)}
                 className='btn-secondary py-3'
               >
                 Cancel
               </button>
-              <button 
+              <button
                 disabled={loading}
                 onClick={showConfirm === 'delete' ? handleDelete : handleDisable}
-                className={`py-3 rounded-xl font-bold text-white transition-all ${
-                  showConfirm === 'delete' ? 'bg-red-500 hover:bg-red-600' : 'bg-brand-500 hover:bg-brand-600'
-                }`}
+                className={`py-3 rounded-xl font-bold text-white transition-all ${showConfirm === 'delete' ? 'bg-red-500 hover:bg-red-600' : 'bg-brand-500 hover:bg-brand-600'
+                  }`}
               >
                 {loading ? 'Processing...' : `Confirm ${showConfirm.charAt(0).toUpperCase() + showConfirm.slice(1)}`}
               </button>

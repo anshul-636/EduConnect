@@ -4,6 +4,7 @@ import Layout from '../components/common/Layout';
 import Loader from '../components/common/Loader';
 import forumService from '../services/forumService';
 import useAuthStore from '../store/authStore';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 const roleColor = {
   ADMIN: 'bg-red-500/20 text-red-400',
@@ -19,6 +20,7 @@ const Forum = () => {
   const [form, setForm] = useState({ title: '', content: '' });
   const [posting, setPosting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  useScrollReveal();
 
   const fetchPosts = () => {
     forumService.getAll()
@@ -47,7 +49,7 @@ const Forum = () => {
   return (
     <Layout>
       <div className='max-w-3xl mx-auto'>
-        <div className='flex items-center justify-between mb-6'>
+        <div className='flex items-center justify-between mb-6 reveal'>
           <div>
             <h1 className='font-display font-bold text-2xl text-dark-50'>Forum</h1>
             <p className='text-dark-400 text-sm mt-1'>Discuss events, resources and ideas</p>
@@ -59,7 +61,7 @@ const Forum = () => {
         </div>
 
         {showForm && (
-          <div className='card mb-6'>
+          <div className='card mb-6 reveal-scale'>
             <form onSubmit={handleSubmit} className='space-y-3'>
               <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
                 className='input' placeholder='Post title (optional)' />
@@ -86,8 +88,8 @@ const Forum = () => {
           </div>
         ) : (
           <div className='space-y-3'>
-            {posts.map(post => (
-              <Link key={post.id} to={'/forum/' + post.id} className='card-hover block'>
+            {posts.map((post, i) => (
+              <Link key={post.id} to={'/forum/' + post.id} className={`card-hover block reveal delay-${Math.min((i % 8) + 1, 8)}`}>
                 <div className='flex items-start justify-between'>
                   <div className='flex-1'>
                     {post.title && <h3 className='font-semibold text-dark-100 mb-1'>{post.title}</h3>}

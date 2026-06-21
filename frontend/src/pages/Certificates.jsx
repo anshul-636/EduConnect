@@ -2,16 +2,18 @@ import { useEffect, useState } from 'react';
 import Layout from '../components/common/Layout';
 import Loader from '../components/common/Loader';
 import certificateService from '../services/certificateService';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 const typeStyle = {
-  WINNER: { gradient:'from-yellow-500 to-amber-600', icon:'🥇', label:'Winner' },
-  RUNNER_UP: { gradient:'from-slate-500 to-slate-600', icon:'🥈', label:'Runner Up' },
-  PARTICIPATION: { gradient:'from-brand-500 to-purple-600', icon:'🏅', label:'Participation' },
+  WINNER: { gradient: 'from-yellow-500 to-amber-600', icon: '🥇', label: 'Winner' },
+  RUNNER_UP: { gradient: 'from-slate-500 to-slate-600', icon: '🥈', label: 'Runner Up' },
+  PARTICIPATION: { gradient: 'from-brand-500 to-purple-600', icon: '🏅', label: 'Participation' },
 };
 
 const Certificates = () => {
   const [certs, setCerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  useScrollReveal();
 
   useEffect(() => {
     certificateService.getMyCertificates()
@@ -27,21 +29,21 @@ const Certificates = () => {
   return (
     <Layout>
       <div className='max-w-4xl mx-auto'>
-        <div className='mb-8'>
+        <div className='mb-8 reveal'>
           <h1 className='font-display font-bold text-2xl text-dark-50'>My Certificates</h1>
           <p className='text-dark-400 text-sm mt-1'>{certs.length} certificates earned</p>
         </div>
         {loading ? <Loader /> : certs.length === 0 ? (
-          <div className='text-center py-20 text-dark-500'>
+          <div className='text-center py-20 text-dark-500 reveal'>
             <p className='text-4xl mb-3'>🏅</p>
             <p>No certificates yet. Participate in events to earn them!</p>
           </div>
         ) : (
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            {certs.map(cert => {
+            {certs.map((cert, i) => {
               const style = typeStyle[cert.type] || typeStyle.PARTICIPATION;
               return (
-                <div key={cert.id} className={'rounded-2xl p-6 text-white bg-gradient-to-br ' + style.gradient}>
+                <div key={cert.id} className={'rounded-2xl p-6 text-white bg-gradient-to-br reveal-scale delay-' + Math.min((i % 8) + 1, 8) + ' ' + style.gradient}>
                   <div className='flex items-start justify-between mb-3'>
                     <span className='text-3xl'>{style.icon}</span>
                     <span className='text-xs font-semibold px-2 py-1 rounded-full bg-white/20'>{style.label}</span>

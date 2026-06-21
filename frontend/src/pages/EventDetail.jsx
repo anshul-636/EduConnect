@@ -109,7 +109,7 @@ const EventDetail = () => {
           <h1 className='font-display font-bold text-2xl text-dark-50 mb-2'>{event.title}</h1>
           <p className='text-dark-400 text-sm mb-6'>{event.description || 'No description provided.'}</p>
           <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mb-6'>
-            {[{label:'Category',value:event.category},{label:'Target Class',value:event.targetClass||'N/A'},{label:'Location',value:event.location||'N/A'},{label:'Date & Time',value:`${new Date(event.eventDate).toLocaleDateString()} at ${event.eventTime||'TBA'}`}].map(s => (
+            {[{ label: 'Category', value: event.category }, { label: 'Target Class', value: event.targetClass || 'N/A' }, { label: 'Location', value: event.location || 'N/A' }, { label: 'Date & Time', value: `${new Date(event.eventDate).toLocaleDateString()} at ${event.eventTime || 'TBA'}` }].map(s => (
               <div key={s.label} className='bg-dark-800 rounded-xl p-4 border border-dark-700'>
                 <p className='text-xs text-dark-500 mb-1'>{s.label}</p>
                 <p className='font-semibold text-dark-100 text-sm'>{s.value}</p>
@@ -175,7 +175,7 @@ const EventDetail = () => {
                 <div className='bg-dark-800 p-5 rounded-2xl border border-dark-700 space-y-4'>
                   <h3 className='font-semibold text-dark-100'>Team Details (Max {event.teamSize} members)</h3>
                   <input value={teamName} onChange={e => setTeamName(e.target.value)} placeholder='Team Name' className='input w-full' />
-                  
+
                   {teamMembers.map((member, idx) => (
                     <div key={idx} className='pt-2 border-t border-dark-700'>
                       <p className='text-xs text-dark-400 mb-2'>Member {idx + 2}</p>
@@ -205,8 +205,8 @@ const EventDetail = () => {
             <div className='mt-8 pt-8 border-t border-dark-800 flex flex-wrap items-center gap-4'>
               <div className='flex items-center gap-3 bg-dark-800 p-2 pl-4 rounded-xl border border-dark-700'>
                 <span className='text-xs font-bold uppercase tracking-wider text-dark-400'>Update Status:</span>
-                <select 
-                  value={event.status} 
+                <select
+                  value={event.status}
                   onChange={(e) => handleStatusChange(e.target.value)}
                   className='bg-dark-900 text-dark-100 text-sm font-semibold py-1.5 px-3 rounded-lg border border-dark-700 focus:outline-none focus:border-brand-500'
                 >
@@ -217,7 +217,7 @@ const EventDetail = () => {
                   <option value='COMPLETED'>COMPLETED</option>
                 </select>
               </div>
-              <button 
+              <button
                 onClick={() => navigate(`/events/${id}/results`)}
                 className='px-5 py-2.5 bg-brand-500/10 border border-brand-500/30 text-brand-400 text-sm font-bold rounded-xl hover:bg-brand-500/20 transition-all'
               >

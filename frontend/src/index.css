@@ -17,7 +17,7 @@
   --glow-green: rgba(0, 255, 157, 0.35);
   --glow-amber: rgba(255, 184, 0, 0.4);
 
-  /* Scroll-reactive ambient — set by JS in Layout.jsx */
+  /* Scroll-reactive ambient — set by JS */
   --ambient-r: 139;
   --ambient-g: 92;
   --ambient-b: 246;
@@ -118,44 +118,36 @@
   transform: scale(1);
 }
 
-/* Stagger delays — both naming conventions used across the app */
-.delay-1,
-.d1 {
+/* Stagger delays */
+.delay-1 {
   transition-delay: 0.05s;
 }
 
-.delay-2,
-.d2 {
+.delay-2 {
   transition-delay: 0.10s;
 }
 
-.delay-3,
-.d3 {
+.delay-3 {
   transition-delay: 0.16s;
 }
 
-.delay-4,
-.d4 {
+.delay-4 {
   transition-delay: 0.22s;
 }
 
-.delay-5,
-.d5 {
+.delay-5 {
   transition-delay: 0.28s;
 }
 
-.delay-6,
-.d6 {
+.delay-6 {
   transition-delay: 0.34s;
 }
 
-.delay-7,
-.d7 {
+.delay-7 {
   transition-delay: 0.40s;
 }
 
-.delay-8,
-.d8 {
+.delay-8 {
   transition-delay: 0.46s;
 }
 
@@ -219,15 +211,6 @@
     transform: translateY(-1px);
   }
 
-  .btn-brand {
-    @apply py-2.5 px-5 text-white font-semibold rounded-xl transition-all duration-200 active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed;
-    background: linear-gradient(135deg, #7c3aed 0%, #9333ea 60%, #c084fc 100%);
-  }
-
-  .btn-brand:hover:not(:disabled) {
-    transform: translateY(-1px);
-  }
-
   .btn-secondary {
     @apply w-full py-2.5 px-4 text-slate-200 font-medium rounded-xl transition-all duration-200;
     background: rgba(30, 35, 60, 0.6);
@@ -254,18 +237,7 @@
     border: 1px solid var(--border-subtle);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  }
-
-  /* Back-compat aliases for the existing pages built against the previous design pass */
-  .glass-card {
-    @apply glass rounded-2xl;
-  }
-
-  .glass-card-light {
-    background: rgba(30, 41, 59, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    @apply rounded-2xl backdrop-blur-lg;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
   /* ── Standard card ── */
@@ -327,12 +299,6 @@
     background-clip: text;
   }
 
-  /* Back-compat alias for the small uppercase category labels used in dashboards */
-  .section-label {
-    @apply text-[10px] font-bold uppercase tracking-[0.2em] mb-3 mt-6;
-    color: #475569;
-  }
-
   /* ── Sidebar link ── */
   .sidebar-link {
     @apply flex items-center rounded-xl text-slate-500 hover:text-slate-200 transition-all duration-150 text-sm font-medium;
@@ -350,8 +316,7 @@
   }
 
   /* ── Aurora divider ── */
-  .aurora-line,
-  .aurora-divider {
+  .aurora-line {
     height: 1px;
     background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.5), rgba(0, 212, 255, 0.4), transparent);
   }
@@ -399,7 +364,6 @@
   }
 
   /* ── Glow border ── */
-  .glow-border,
   .glow-border-purple {
     box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.35), inset 0 0 30px rgba(139, 92, 246, 0.03);
   }
@@ -533,17 +497,6 @@
       linear-gradient(rgba(139, 92, 246, 0.04) 1px, transparent 1px),
       linear-gradient(90deg, rgba(139, 92, 246, 0.04) 1px, transparent 1px);
     background-size: 40px 40px;
-  }
-
-  /* Noise texture overlay (used behind the auth pages) */
-  .noise::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    border-radius: inherit;
-    mix-blend-mode: overlay;
   }
 
   /* Orb decorations */

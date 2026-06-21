@@ -44,7 +44,7 @@ const ForgotPassword = () => {
         <div className='absolute inset-0 opacity-20'>
           {[...Array(6)].map((_, i) => (
             <div key={i} className='absolute rounded-full border border-white/30'
-              style={{ width: (i+1)*120+'px', height: (i+1)*120+'px', top:'50%', left:'50%', transform:'translate(-50%,-50%)' }} />
+              style={{ width: (i + 1) * 120 + 'px', height: (i + 1) * 120 + 'px', top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }} />
           ))}
         </div>
         <div className='relative text-center text-white'>
@@ -57,7 +57,7 @@ const ForgotPassword = () => {
       <div className='w-full lg:w-1/2 flex items-center justify-center p-8'>
         <div className='w-full max-w-md animate-fade-in'>
           <div className='flex gap-2 mb-8'>
-            {[1,2].map(s => (
+            {[1, 2].map(s => (
               <div key={s} className={'flex-1 h-1 rounded-full ' + (step >= s ? 'bg-brand-500' : 'bg-dark-800')} />
             ))}
           </div>
@@ -93,7 +93,7 @@ const ForgotPassword = () => {
               <form onSubmit={handleResetPassword} className='space-y-4'>
                 <div>
                   <label className='block text-sm font-medium text-dark-300 mb-1.5'>6-digit OTP</label>
-                  <input type='text' value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g,'').slice(0,6))}
+                  <input type='text' value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder='000000' className='input text-center text-2xl tracking-widest font-bold' maxLength={6} required />
                 </div>
                 <div>

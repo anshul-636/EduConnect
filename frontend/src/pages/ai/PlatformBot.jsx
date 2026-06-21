@@ -60,9 +60,9 @@ const PlatformBot = () => {
       await resourceService.upload(formData);
       setMessages(prev => {
         const next = [...prev];
-        next[next.length - 1] = { 
-          role: 'assistant', 
-          content: `✅ **Successfully added "${file.name}" to the platform.** I've indexed the content and can now answer any questions about it!` 
+        next[next.length - 1] = {
+          role: 'assistant',
+          content: `✅ **Successfully added "${file.name}" to the platform.** I've indexed the content and can now answer any questions about it!`
         };
         return next;
       });

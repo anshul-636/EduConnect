@@ -62,9 +62,9 @@ const SchoolDetail = () => {
                     ✓ Joined
                   </span>
                 ) : !user.schoolId ? (
-                  <button 
-                    onClick={handleJoin} 
-                    disabled={joining} 
+                  <button
+                    onClick={handleJoin}
+                    disabled={joining}
                     className='px-4 py-2 bg-gradient-brand text-white text-sm font-semibold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity whitespace-nowrap shadow-glow'
                   >
                     {joining ? 'Joining...' : 'Join School'}
@@ -74,7 +74,7 @@ const SchoolDetail = () => {
             </div>
           </div>
           <div className='grid grid-cols-3 gap-4 mb-6'>
-            {[{label:'Members',value:school._count?.members||0},{label:'Events',value:school._count?.events||0},{label:'Resources',value:school._count?.resources||0}].map(s => (
+            {[{ label: 'Members', value: school._count?.members || 0 }, { label: 'Events', value: school._count?.events || 0 }, { label: 'Resources', value: school._count?.resources || 0 }].map(s => (
               <div key={s.label} className='bg-dark-800 rounded-xl p-4 text-center'>
                 <p className='font-display font-bold text-2xl text-brand-400'>{s.value}</p>
                 <p className='text-xs text-dark-500 mt-1'>{s.label}</p>

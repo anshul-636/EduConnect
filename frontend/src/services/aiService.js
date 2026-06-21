@@ -3,9 +3,9 @@ import api from './api';
 const aiService = {
   // RAG Study Assistant
   ragChat: async (question, sessionId, resourceId = null, role = null) => {
-    const res = await api.post('/ai/chat/rag', { 
-      question, 
-      session_id: sessionId, 
+    const res = await api.post('/ai/chat/rag', {
+      question,
+      session_id: sessionId,
       resource_id: resourceId,
       role: role
     });

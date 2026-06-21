@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
 
-const DASH = { ADMIN:'/dashboard/admin', SCHOOL:'/dashboard/school', TEACHER:'/dashboard/teacher', STUDENT:'/dashboard/student' };
+const DASH = { ADMIN: '/dashboard/admin', SCHOOL: '/dashboard/school', TEACHER: '/dashboard/teacher', STUDENT: '/dashboard/student' };
 
 const Unauthorized = () => {
   const navigate = useNavigate();

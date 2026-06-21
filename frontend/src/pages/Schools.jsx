@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom';
 import Layout from '../components/common/Layout';
 import Loader from '../components/common/Loader';
 import schoolService from '../services/schoolService';
+import { useScrollReveal } from '../hooks/useScrollReveal';
 
 const Schools = () => {
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  useScrollReveal();
 
   useEffect(() => {
     schoolService.getAll()
@@ -24,7 +26,7 @@ const Schools = () => {
   return (
     <Layout>
       <div className='max-w-6xl mx-auto'>
-        <div className='flex items-center justify-between mb-6'>
+        <div className='flex items-center justify-between mb-6 reveal'>
           <div>
             <h1 className='font-display font-bold text-2xl text-dark-50'>Schools</h1>
             <p className='text-dark-400 text-sm mt-1'>{schools.length} schools on EduConnect</p>
@@ -33,11 +35,11 @@ const Schools = () => {
             onChange={e => setSearch(e.target.value)} className='input max-w-xs' />
         </div>
         {loading ? <Loader /> : filtered.length === 0 ? (
-          <div className='text-center py-20 text-dark-500'>No schools found.</div>
+          <div className='text-center py-20 text-dark-500 reveal'>No schools found.</div>
         ) : (
           <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-            {filtered.map(school => (
-              <Link key={school.id} to={'/schools/' + school.id} className='card-hover group'>
+            {filtered.map((school, i) => (
+              <Link key={school.id} to={'/schools/' + school.id} className={`card-hover group reveal delay-${Math.min((i % 8) + 1, 8)}`}>
                 <div className='flex items-start justify-between mb-3'>
                   <div className='w-10 h-10 rounded-xl bg-gradient-brand flex items-center justify-center text-white font-display font-bold text-lg'>
                     {school.name.charAt(0)}

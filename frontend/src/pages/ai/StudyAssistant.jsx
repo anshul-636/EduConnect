@@ -112,7 +112,7 @@ const StudyAssistant = () => {
       localStorage.removeItem(`educonnect_assistant_messages_${user.id}`);
       localStorage.removeItem(`educonnect_assistant_resource_${user.id}`);
     }
-    await aiService.clearSession(sessionId).catch(() => {});
+    await aiService.clearSession(sessionId).catch(() => { });
     const newId = uuidv4();
     if (user?.id) {
       localStorage.setItem(`educonnect_assistant_session_${user.id}`, newId);
@@ -142,17 +142,17 @@ const StudyAssistant = () => {
     try {
       const res = await resourceService.upload(formData);
       const newResource = res.data;
-      
+
       // Update resources list
       setResources(prev => [newResource, ...prev]);
       // Auto-select the new resource
       setSelectedResource(newResource);
-      
+
       setMessages(prev => {
         const next = [...prev];
-        next[next.length - 1] = { 
-          role: 'assistant', 
-          content: `✅ **Successfully uploaded and indexed "${file.name}".** I'm now ready to answer questions about this document!` 
+        next[next.length - 1] = {
+          role: 'assistant',
+          content: `✅ **Successfully uploaded and indexed "${file.name}".** I'm now ready to answer questions about this document!`
         };
         return next;
       });
@@ -174,13 +174,13 @@ const StudyAssistant = () => {
           {user?.role === 'TEACHER' ? 'AI Lesson Workspace' : user?.role === 'SCHOOL' ? 'AI Institutional Hub' : user?.role === 'ADMIN' ? 'AI Operations Console' : 'AI Study Assistant'}
         </h2>
         <p className='text-dark-400 text-sm'>
-          {user?.role === 'TEACHER' 
+          {user?.role === 'TEACHER'
             ? 'Welcome, Educator! Select lesson resource PDFs on the left, then click any preset card below to instantly generate lesson plans or pop quizzes.'
             : user?.role === 'SCHOOL'
-            ? 'Welcome, Principal! Analyze compliance frameworks, draft school updates, and optimize your institutional operations.'
-            : user?.role === 'ADMIN'
-            ? 'Welcome, Platform Administrator! Run platform safety metrics audits, policy adjustments, and system checks.'
-            : 'Welcome, Learner! Choose your study notes PDF on the left and ask me any tough questions to help you prepare.'}
+              ? 'Welcome, Principal! Analyze compliance frameworks, draft school updates, and optimize your institutional operations.'
+              : user?.role === 'ADMIN'
+                ? 'Welcome, Platform Administrator! Run platform safety metrics audits, policy adjustments, and system checks.'
+                : 'Welcome, Learner! Choose your study notes PDF on the left and ask me any tough questions to help you prepare.'}
         </p>
       </div>
 
@@ -203,14 +203,14 @@ const StudyAssistant = () => {
   return (
     <Layout>
       <div className='max-w-6xl mx-auto h-[calc(100vh-120px)] flex gap-4'>
- 
+
         {/* Left — Resource selector */}
         <div className='w-64 flex-shrink-0 flex flex-col gap-3'>
           <div className='card'>
             <h2 className='font-display font-bold text-dark-50 mb-1'>{cfg.title}</h2>
             <p className='text-dark-500 text-xs'>{cfg.desc}</p>
           </div>
- 
+
           <div className='card flex-1 overflow-hidden flex flex-col'>
             <div className='flex items-center justify-between mb-3'>
               <p className='text-sm font-medium text-dark-300'>Select Resource</p>
@@ -232,16 +232,16 @@ const StudyAssistant = () => {
                 </button>
               ))}
               {resources.length === 0 && (
-                <p className='text-dark-600 text-xs text-center py-4'>No PDF resources found.<br/>Upload PDFs to use RAG.</p>
+                <p className='text-dark-600 text-xs text-center py-4'>No PDF resources found.<br />Upload PDFs to use RAG.</p>
               )}
             </div>
           </div>
- 
+
           <button onClick={handleClear} className='btn-secondary text-sm py-2'>
             🗑️ Clear Chat
           </button>
         </div>
- 
+
         {/* Right — Chat */}
         <div className='flex-1 card overflow-hidden flex flex-col p-0'>
           <div className='px-4 py-3 border-b border-dark-800 flex items-center gap-2'>

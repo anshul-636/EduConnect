@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { BookOpen, Microscope, Atom, Calculator, Telescope, Binary, Database, Target, Brain, Compass, Sparkles } from 'lucide-react';
 import authService from '../../services/authService';
 import useAuthStore from '../../store/authStore';
 
@@ -8,30 +7,6 @@ const DASH = { ADMIN: '/dashboard/admin', SCHOOL: '/dashboard/school', TEACHER: 
 
 // ─── Animated Study Background ───────────────────────────────────────────────
 const StudyBackground = () => {
-  const floatingIcons = [
-    { icon: BookOpen, x: 8, y: 15, delay: 0, duration: 6, size: 48 },
-    { icon: Microscope, x: 85, y: 10, delay: 1, duration: 7, size: 56 },
-    { icon: Atom, x: 15, y: 70, delay: 2, duration: 8, size: 64 },
-    { icon: Calculator, x: 78, y: 65, delay: 0.5, duration: 6.5, size: 40 },
-    { icon: Telescope, x: 50, y: 8, delay: 1.5, duration: 7.5, size: 70 },
-    { icon: Binary, x: 92, y: 45, delay: 3, duration: 9, size: 48 },
-    { icon: Database, x: 5, y: 45, delay: 2.5, duration: 7, size: 56 },
-    { icon: Brain, x: 65, y: 80, delay: 1, duration: 8, size: 50 },
-    { icon: Target, x: 35, y: 85, delay: 0, duration: 6, size: 45 },
-    { icon: Compass, x: 72, y: 20, delay: 3.5, duration: 9, size: 52 },
-    { icon: Sparkles, x: 25, y: 30, delay: 2, duration: 7, size: 40 },
-  ];
-
-  const equations = [
-    { text: 'E = mc²', x: 10, y: 25, delay: 0 },
-    { text: 'F = ma', x: 80, y: 30, delay: 1.5 },
-    { text: 'a² + b² = c²', x: 20, y: 75, delay: 3 },
-    { text: '∫f(x)dx', x: 70, y: 72, delay: 2 },
-    { text: 'Δy/Δx', x: 45, y: 18, delay: 1 },
-    { text: 'π ≈ 3.14159', x: 88, y: 58, delay: 4 },
-    { text: 'y = mx+b', x: 3, y: 55, delay: 2.5 },
-  ];
-
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none fade-in">
       {/* Deep neutral background */}
@@ -45,38 +20,6 @@ const StudyBackground = () => {
       <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-brand-500/10 blur-[120px] animate-pulse-slow" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-500/10 blur-[130px] animate-pulse-slow" style={{ animationDelay: '2s' }} />
       <div className="absolute top-[20%] right-[30%] w-[30%] h-[30%] rounded-full bg-purple-600/5 blur-[100px] animate-pulse-slow" style={{ animationDelay: '4s' }} />
-
-      {/* Floating abstract study icons */}
-      {floatingIcons.map((Item, i) => (
-        <div
-          key={`icon-${i}`}
-          className="absolute select-none animate-float-random text-white/[0.04]"
-          style={{
-            left: `${Item.x}%`,
-            top: `${Item.y}%`,
-            animationDelay: `${Item.delay}s`,
-            animationDuration: `${Item.duration}s`,
-          }}
-        >
-          <Item.icon size={Item.size} strokeWidth={1} />
-        </div>
-      ))}
-
-      {/* Floating crisp equations */}
-      {equations.map((eq, i) => (
-        <div
-          key={`eq-${i}`}
-          className="absolute font-mono text-lg tracking-widest text-white/[0.04] select-none animate-drift"
-          style={{
-            left: `${eq.x}%`,
-            top: `${eq.y}%`,
-            animationDelay: `${eq.delay}s`,
-            animationDuration: '12s',
-          }}
-        >
-          {eq.text}
-        </div>
-      ))}
     </div>
   );
 };

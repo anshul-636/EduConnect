@@ -6,7 +6,7 @@ import useAuthStore from '../../store/authStore';
 
 const FloatingBot = () => {
   const { user } = useAuthStore();
-  
+
   const [open, setOpen] = useState(() => {
     if (!user) return false;
     const saved = localStorage.getItem(`educonnect_chat_open_${user.id}`);
@@ -45,7 +45,7 @@ const FloatingBot = () => {
     const updatedWithUser = [...messages, userMsg];
     setMessages(updatedWithUser);
     localStorage.setItem(`educonnect_chat_history_${user.id}`, JSON.stringify(updatedWithUser));
-    
+
     setLoading(true);
     try {
       const res = await aiService.platformChat(message, sessionId);
