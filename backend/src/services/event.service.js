@@ -108,9 +108,7 @@ class EventService {
   async register(eventId, studentId, teamName, teamMembers = []) {
     const event = await prisma.event.findUnique({ where: { id: eventId } });
     if (!event) { const err = new Error('Event not found.'); err.statusCode = 404; throw err; }
-    // Allow OPEN status, or PUBLISHED when there's no regDeadline (event opened directly for registration)
-    const canRegister = event.status === 'OPEN' || (event.status === 'PUBLISHED' && !event.regDeadline);
-    if (!canRegister) {
+    if (event.status !== 'OPEN') {
       const err = new Error('This event is not open for registration.'); err.statusCode = 400; throw err;
     }
     if (event.regDeadline && new Date() > new Date(event.regDeadline)) {
@@ -128,10 +126,10 @@ class EventService {
     });
   }
 
-  async getRegistrations(eventId, userId) {
+  async getRegistrations(eventId, userId, userRole) {
     const event = await prisma.event.findUnique({ where: { id: eventId }, include: { school: true } });
     if (!event) { const err = new Error('Event not found.'); err.statusCode = 404; throw err; }
-    if (event.school.adminId !== userId) {
+    if (event.school.adminId !== userId && userRole !== 'ADMIN') {
       const err = new Error('Access denied.'); err.statusCode = 403; throw err;
     }
     return prisma.registration.findMany({
@@ -150,10 +148,10 @@ class EventService {
   }
 
   // Organizer submits scores for each participant — [{registrationId, score}]
-  async submitResults(eventId, userId, results) {
+  async submitResults(eventId, userId, results, userRole) {
     const event = await prisma.event.findUnique({ where: { id: eventId }, include: { school: true } });
     if (!event) { const err = new Error('Event not found.'); err.statusCode = 404; throw err; }
-    if (event.school.adminId !== userId) {
+    if (event.school.adminId !== userId && userRole !== 'ADMIN') {
       const err = new Error('Access denied.'); err.statusCode = 403; throw err;
     }
     // Sort results by score descending, assign ranks
@@ -226,10 +224,10 @@ class EventService {
   }
 
   // Organizer publishes answer key — [{question, answer, explanation}]
-  async updateAnswerKey(eventId, userId, answerKey) {
+  async updateAnswerKey(eventId, userId, answerKey, userRole) {
     const event = await prisma.event.findUnique({ where: { id: eventId }, include: { school: true } });
     if (!event) { const err = new Error('Event not found.'); err.statusCode = 404; throw err; }
-    if (event.school.adminId !== userId) {
+    if (event.school.adminId !== userId && userRole !== 'ADMIN') {
       const err = new Error('Access denied.'); err.statusCode = 403; throw err;
     }
     return prisma.event.update({ where: { id: eventId }, data: { answerKey } });

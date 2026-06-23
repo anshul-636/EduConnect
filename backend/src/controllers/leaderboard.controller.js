@@ -2,7 +2,7 @@ const leaderboardService = require('../services/leaderboard.service');
 
 const setScore = async (req, res) => {
   try {
-    const entry = await leaderboardService.setScore(req.body, req.user.id);
+    const entry = await leaderboardService.setScore(req.body, req.user.id, req.user.role);
     res.status(201).json({ success: true, data: entry });
   } catch (err) { res.status(err.statusCode || 500).json({ success: false, message: err.message }); }
 };

@@ -28,7 +28,7 @@ const update = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(422).json({ success: false, errors: errors.array() });
   try {
-    const school = await schoolService.update(req.params.id, req.body, req.user.id);
+    const school = await schoolService.update(req.params.id, req.body, req.user.id, req.user.role);
     res.json({ success: true, data: school });
   } catch (err) { res.status(err.statusCode || 500).json({ success: false, message: err.message }); }
 };

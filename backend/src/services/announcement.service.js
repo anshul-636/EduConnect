@@ -2,7 +2,10 @@ const prisma = require('../utils/prisma');
 const notificationService = require('./notification.service');
 
 class AnnouncementService {
-  async create(data, authorId) {
+  async create(data, authorId, authorRole) {
+    if (!['SCHOOL', 'TEACHER', 'ADMIN'].includes(authorRole)) {
+      const e = new Error('Forbidden: only staff can post announcements'); e.statusCode = 403; throw e;
+    }
     const school = await prisma.school.findFirst({
       where: { OR: [{ adminId: authorId }, { members: { some: { id: authorId } } }] },
     });
@@ -10,16 +13,16 @@ class AnnouncementService {
 
     const announcement = await prisma.announcement.create({
       data: {
-        title:      data.title,
-        content:    data.content,
+        title: data.title,
+        content: data.content,
         targetRole: data.targetRole || 'ALL',
-        schoolId:   school.id,
+        schoolId: school.id,
         authorId,
-        classId:    data.classId || null,
+        classId: data.classId || null,
       },
       include: {
         author: { select: { id: true, name: true, role: true } },
-        class:  { select: { id: true, name: true } },
+        class: { select: { id: true, name: true } },
         school: { select: { id: true, name: true } },
       },
     });
@@ -33,11 +36,11 @@ class AnnouncementService {
     if (members.length > 0) {
       await notificationService.bulkCreate(
         members.map(m => ({
-          userId:  m.id,
-          type:    'ANNOUNCEMENT',
-          title:   announcement.title,
+          userId: m.id,
+          type: 'ANNOUNCEMENT',
+          title: announcement.title,
           message: announcement.content.slice(0, 100) + (announcement.content.length > 100 ? '…' : ''),
-          data:    { announcementId: announcement.id },
+          data: { announcementId: announcement.id },
         }))
       );
     }
@@ -51,15 +54,15 @@ class AnnouncementService {
     if (filters.targetRole && filters.targetRole !== 'ALL') {
       where.OR = [{ targetRole: filters.targetRole }, { targetRole: 'ALL' }];
     }
-    const page  = Math.max(1, parseInt(filters.page)  || 1);
+    const page = Math.max(1, parseInt(filters.page) || 1);
     const limit = Math.min(50, parseInt(filters.limit) || 20);
-    const skip  = (page - 1) * limit;
+    const skip = (page - 1) * limit;
     const [items, total] = await Promise.all([
       prisma.announcement.findMany({
         where, orderBy: { createdAt: 'desc' }, skip, take: limit,
         include: {
           author: { select: { id: true, name: true, role: true } },
-          class:  { select: { id: true, name: true } },
+          class: { select: { id: true, name: true } },
         },
       }),
       prisma.announcement.count({ where }),

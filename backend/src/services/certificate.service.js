@@ -35,22 +35,15 @@ class CertificateService {
    * Generate + upload certificates for all registrants in an event.
    * Safe to call multiple times — skips already-generated certs.
    */
-  async generate(eventId, userId) {
-    const school = await prisma.school.findUnique({ where: { adminId: userId } });
-    if (!school) {
-      const err = new Error('School not found.');
-      err.statusCode = 404;
-      throw err;
-    }
-
-    const event = await prisma.event.findUnique({ where: { id: eventId } });
+  async generate(eventId, userId, userRole) {
+    const event = await prisma.event.findUnique({ where: { id: eventId }, include: { school: true } });
     if (!event) {
       const err = new Error('Event not found.');
       err.statusCode = 404;
       throw err;
     }
 
-    if (event.schoolId !== school.id) {
+    if (event.school.adminId !== userId && userRole !== 'ADMIN') {
       const err = new Error('You can only generate certificates for your own events.');
       err.statusCode = 403;
       throw err;
@@ -101,7 +94,7 @@ class CertificateService {
           eventCategory: event.category,
           eventDate: event.eventDate,
           certType: type,
-          schoolName: school.name,
+          schoolName: event.school.name,
         });
 
         const publicId = `cert_${eventId}_${reg.studentId}`;
@@ -196,14 +189,7 @@ class CertificateService {
     return { ...cert, schoolName: school ? school.name : 'EduConnect' };
   }
 
-  async sendCertificatesByEmail(eventId, userId) {
-    const school = await prisma.school.findUnique({ where: { adminId: userId } });
-    if (!school) {
-      const err = new Error('School not found.');
-      err.statusCode = 404;
-      throw err;
-    }
-
+  async sendCertificatesByEmail(eventId, userId, userRole) {
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       include: { school: true },
@@ -213,14 +199,14 @@ class CertificateService {
       err.statusCode = 404;
       throw err;
     }
-    if (event.schoolId !== school.id) {
+    if (event.school.adminId !== userId && userRole !== 'ADMIN') {
       const err = new Error('You can only send certificates for your own events.');
       err.statusCode = 403;
       throw err;
     }
 
     // Ensure all certs exist + have files
-    await this.generate(eventId, userId);
+    await this.generate(eventId, userId, userRole);
 
     const sendEmail = require('../utils/email');
 
@@ -251,29 +237,28 @@ class CertificateService {
         const honorsText = isWinner
           ? 'Winner (1st Place) 🥇'
           : isRunner
-          ? 'Runner Up (2nd Place) 🥈'
-          : 'Participation';
+            ? 'Runner Up (2nd Place) 🥈'
+            : 'Participation';
         const prizeDetails =
           isWinner && cert.event.firstPrize
             ? `<p style="color:#fbbf24;font-weight:bold;">🏆 Prize: ${cert.event.firstPrize}</p>`
             : isRunner && cert.event.secondPrize
-            ? `<p style="color:#94a3b8;font-weight:bold;">🏆 Prize: ${cert.event.secondPrize}</p>`
-            : '';
+              ? `<p style="color:#94a3b8;font-weight:bold;">🏆 Prize: ${cert.event.secondPrize}</p>`
+              : '';
 
         const html = `
           <div style="font-family:sans-serif;background:#0f172a;color:#f1f5f9;padding:40px;border-radius:16px;max-width:600px;margin:0 auto;border:1px solid #1e293b;">
             <h1 style="color:#c9a84c;text-align:center;">EduConnect</h1>
             <h2 style="text-align:center;">Congratulations, ${cert.student.name}!</h2>
-            <p style="text-align:center;">Official certificate for <strong>${cert.event.title}</strong> by <strong>${school.name}</strong>.</p>
+            <p style="text-align:center;">Official certificate for <strong>${cert.event.title}</strong> by <strong>${event.school.name}</strong>.</p>
             <div style="background:#1e293b;border-radius:12px;padding:20px;text-align:center;">
               <p style="font-size:22px;font-weight:bold;">${honorsText}</p>
               ${prizeDetails}
             </div>
-            ${
-              cert.fileUrl
-                ? `<p style="text-align:center;margin-top:20px;"><a href="${cert.fileUrl}" style="color:#60a5fa;">Download Certificate PDF</a></p>`
-                : ''
-            }
+            ${cert.fileUrl
+            ? `<p style="text-align:center;margin-top:20px;"><a href="${cert.fileUrl}" style="color:#60a5fa;">Download Certificate PDF</a></p>`
+            : ''
+          }
           </div>
         `;
 

@@ -3,7 +3,7 @@ const { generateCertificatePDF } = require('../utils/generateCertificate');
 
 const generate = async (req, res) => {
   try {
-    const certs = await certificateService.generate(req.params.eventId, req.user.id);
+    const certs = await certificateService.generate(req.params.eventId, req.user.id, req.user.role);
     res.status(201).json({ success: true, data: certs, message: certs.length + ' certificates generated.' });
   } catch (err) { res.status(err.statusCode || 500).json({ success: false, message: err.message }); }
 };
@@ -42,7 +42,7 @@ const download = async (req, res) => {
 
 const sendCertificatesByEmail = async (req, res) => {
   try {
-    const results = await certificateService.sendCertificatesByEmail(req.params.eventId, req.user.id);
+    const results = await certificateService.sendCertificatesByEmail(req.params.eventId, req.user.id, req.user.role);
     res.json({ success: true, message: 'Certificates automatically generated and emailed to all participants!', data: results });
   } catch (err) {
     res.status(err.statusCode || 500).json({ success: false, message: err.message });

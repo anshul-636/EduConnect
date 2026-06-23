@@ -2,9 +2,13 @@ const prisma = require('../utils/prisma');
 
 class LeaderboardService {
 
-  async setScore(data, userId) {
-    const school = await prisma.school.findUnique({ where: { adminId: userId } });
-    if (!school) { const err = new Error('School not found.'); err.statusCode = 404; throw err; }
+  async setScore(data, userId, userRole) {
+    const event = await prisma.event.findUnique({ where: { id: data.eventId }, include: { school: true } });
+    if (!event) { const err = new Error('Event not found.'); err.statusCode = 404; throw err; }
+    if (event.school.adminId !== userId && userRole !== 'ADMIN') {
+      const err = new Error('Access denied.'); err.statusCode = 403; throw err;
+    }
+    const school = event.school;
 
     const existing = await prisma.leaderboard.findFirst({
       where: { eventId: data.eventId, studentId: data.studentId },

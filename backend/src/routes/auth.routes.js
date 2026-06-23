@@ -56,12 +56,22 @@ router.delete('/delete-me', protect, require('../controllers/auth.controller').d
 router.post('/reactivate', require('../controllers/auth.controller').reactivateAccount);
 
 // ── Google OAuth ───────────────────────────────────────────────────────────────
+const googleNotConfigured = (req, res) => res.status(503).json({
+  success: false,
+  message: 'Google sign-in is not configured on this server. See backend/.env.example for the required GOOGLE_* variables.',
+});
+
 router.get('/google', (req, res, next) => {
+  if (!passport.googleConfigured) return googleNotConfigured(req, res);
   // We no longer pass role here — role is chosen AFTER OAuth on the frontend
   passport.authenticate('google', { scope: ['profile', 'email'], session: true })(req, res, next);
 });
 
 router.get('/google/callback',
+  (req, res, next) => {
+    if (!passport.googleConfigured) return googleNotConfigured(req, res);
+    next();
+  },
   passport.authenticate('google', {
     session: false,
     failureRedirect: process.env.FRONTEND_URL + '/login?error=oauth_failed',
@@ -120,7 +130,6 @@ router.post('/google/complete', async (req, res) => {
           password: 'GOOGLE_OAUTH_' + googleId,
           role,
           isActive: true,
-          isVerified: true, // Google-authenticated users don't need email verification
           ...(schoolId ? { schoolId } : {}),
         },
       });

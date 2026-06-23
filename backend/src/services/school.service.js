@@ -41,12 +41,12 @@ class SchoolService {
     return school;
   }
 
-  async update(id, data, userId) {
+  async update(id, data, userId, userRole) {
     const school = await prisma.school.findUnique({ where: { id } });
     if (!school) {
       const err = new Error('School not found.'); err.statusCode = 404; throw err;
     }
-    if (school.adminId !== userId) {
+    if (school.adminId !== userId && userRole !== 'ADMIN') {
       const err = new Error('You can only update your own school.'); err.statusCode = 403; throw err;
     }
     return prisma.school.update({ where: { id }, data });

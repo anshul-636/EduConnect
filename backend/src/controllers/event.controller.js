@@ -42,7 +42,7 @@ const register = async (req, res) => {
 
 const getRegistrations = async (req, res) => {
   try {
-    const regs = await eventService.getRegistrations(req.params.id, req.user.id);
+    const regs = await eventService.getRegistrations(req.params.id, req.user.id, req.user.role);
     res.json({ success: true, data: regs });
   } catch (err) { res.status(err.statusCode || 500).json({ success: false, message: err.message }); }
 };
@@ -56,7 +56,7 @@ const getMyRegistrations = async (req, res) => {
 
 const submitResults = async (req, res) => {
   try {
-    const leaderboard = await eventService.submitResults(req.params.id, req.user.id, req.body.results);
+    const leaderboard = await eventService.submitResults(req.params.id, req.user.id, req.body.results, req.user.role);
     res.json({ success: true, data: leaderboard });
   } catch (err) { res.status(err.statusCode || 500).json({ success: false, message: err.message }); }
 };
@@ -70,7 +70,7 @@ const getLeaderboard = async (req, res) => {
 
 const updateAnswerKey = async (req, res) => {
   try {
-    const event = await eventService.updateAnswerKey(req.params.id, req.user.id, req.body.answerKey);
+    const event = await eventService.updateAnswerKey(req.params.id, req.user.id, req.body.answerKey, req.user.role);
     res.json({ success: true, data: event });
   } catch (err) { res.status(err.statusCode || 500).json({ success: false, message: err.message }); }
 };
