@@ -23,11 +23,11 @@ class EventService {
   async getAll(filters = {}, user = null) {
     const where = {};
     if (filters.category) where.category = filters.category;
-    
+
     // Visibility Logic:
     // 1. If a specific status is requested, use it, but ADMIN/SCHOOL owner check still applies for DRAFT
     // 2. If NO status is requested, default to NOT showing DRAFT for public views.
-    
+
     if (filters.status) {
       if (filters.status === 'DRAFT') {
         // Only school admins or global admins can search for DRAFT
@@ -46,19 +46,19 @@ class EventService {
       if (!user || user.role !== 'ADMIN') {
         const publicStates = ['PUBLISHED', 'OPEN', 'ONGOING', 'COMPLETED'];
         if (user?.role === 'SCHOOL') {
-           // School sees public states OR their own drafts
-           where.OR = [
-             { status: { in: publicStates } },
-             { AND: [{ status: 'DRAFT' }, { school: { adminId: user.id } }] }
-           ];
+          // School sees public states OR their own drafts
+          where.OR = [
+            { status: { in: publicStates } },
+            { AND: [{ status: 'DRAFT' }, { school: { adminId: user.id } }] }
+          ];
         } else {
-           where.status = { in: publicStates };
+          where.status = { in: publicStates };
         }
       }
     }
 
     if (filters.search) where.title = { contains: filters.search, mode: 'insensitive' };
-    
+
     return prisma.event.findMany({
       where,
       orderBy: { createdAt: 'desc' },
@@ -108,14 +108,16 @@ class EventService {
   async register(eventId, studentId, teamName, teamMembers = []) {
     const event = await prisma.event.findUnique({ where: { id: eventId } });
     if (!event) { const err = new Error('Event not found.'); err.statusCode = 404; throw err; }
-    if (event.status !== 'OPEN') {
+    // Allow OPEN status, or PUBLISHED when there's no regDeadline (event opened directly for registration)
+    const canRegister = event.status === 'OPEN' || (event.status === 'PUBLISHED' && !event.regDeadline);
+    if (!canRegister) {
       const err = new Error('This event is not open for registration.'); err.statusCode = 400; throw err;
     }
     if (event.regDeadline && new Date() > new Date(event.regDeadline)) {
       const err = new Error('Registration deadline has passed.'); err.statusCode = 400; throw err;
     }
     if (event.teamSize > 1 && teamMembers.length > (event.teamSize - 1)) {
-       const err = new Error(`Maximum team size is ${event.teamSize}.`); err.statusCode = 400; throw err;
+      const err = new Error(`Maximum team size is ${event.teamSize}.`); err.statusCode = 400; throw err;
     }
     const existing = await prisma.registration.findUnique({
       where: { eventId_studentId: { eventId, studentId } },
@@ -236,16 +238,16 @@ class EventService {
   async delete(id, userId) {
     const event = await prisma.event.findUnique({ where: { id }, include: { school: true } });
     if (!event) { const err = new Error('Event not found.'); err.statusCode = 404; throw err; }
-    
+
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (event.school.adminId !== userId && user?.role !== 'ADMIN') {
       const err = new Error('You can only delete your own events.'); err.statusCode = 403; throw err;
     }
-    
+
     // Delete registrations and leaderboard entries associated with this event first
     await prisma.registration.deleteMany({ where: { eventId: id } });
     await prisma.leaderboard.deleteMany({ where: { eventId: id } });
-    
+
     return prisma.event.delete({ where: { id } });
   }
 }

@@ -65,18 +65,21 @@ const Events = () => {
         {loading ? <Loader /> : events.length === 0 ? (
           <div className='text-center py-20 text-dark-500 reveal'>No events found.</div>
         ) : (
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pb-12'>
             {events.map((event, i) => (
-              <Link key={event.id} to={'/events/' + event.id} className={`card-hover group reveal delay-${Math.min((i % 8) + 1, 8)}`}>
-                <div className='flex items-start justify-between mb-3'>
-                  <span className='text-xs font-medium px-2 py-1 rounded-full bg-brand-500/20 text-brand-400'>{event.category}</span>
-                  <span className={'text-xs font-medium px-2 py-1 rounded-full ' + (statusColor[event.status] || '')}>{event.status}</span>
-                </div>
-                <h3 className='font-semibold text-dark-100 group-hover:text-brand-400 transition-colors mt-2'>{event.title}</h3>
-                <p className='text-xs text-dark-500 mt-1'>{event.school?.name} — {event.school?.location}</p>
-                <div className='flex items-center justify-between mt-4 pt-4 border-t border-dark-800 text-xs text-dark-500'>
-                  <span>📅 {new Date(event.eventDate).toLocaleDateString()}</span>
-                  <span>👥 {event._count?.registrations || 0} registered</span>
+              <Link key={event.id} to={'/events/' + event.id} className={`group card-hover relative overflow-hidden flex flex-col reveal delay-${Math.min((i % 8) + 1, 8)}`}>
+                <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 blur-[40px] transition-all duration-300 group-hover:scale-110 group-hover:opacity-25 bg-gradient-to-r from-brand-500 to-purple-600" />
+                <div className="p-5 flex-1 flex flex-col relative z-10">
+                  <div className='flex items-start justify-between mb-4'>
+                    <span className='text-[10px] font-black tracking-widest px-2.5 py-1 rounded bg-white/5 text-brand-300 border border-white/10 shadow-sm'>{event.category}</span>
+                    <span className={'text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-full border border-white/5 ' + (statusColor[event.status] || '')}>{event.status}</span>
+                  </div>
+                  <h3 className='font-display font-bold text-lg text-white group-hover:text-brand-300 transition-colors tracking-tight leading-tight'>{event.title}</h3>
+                  <p className='text-xs text-slate-500 mt-1.5 font-medium'>{event.school?.name} — {event.school?.location}</p>
+                  <div className='flex items-center justify-between mt-auto pt-5 text-xs text-slate-400 font-medium'>
+                    <span className="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded border border-white/5"><span className="text-brand-400">📅</span> {new Date(event.eventDate).toLocaleDateString()}</span>
+                    <span className="flex items-center gap-1.5 bg-black/20 px-2 py-1 rounded border border-white/5"><span className="text-purple-400">👥</span> {event._count?.registrations || 0} enrolled</span>
+                  </div>
                 </div>
               </Link>
             ))}

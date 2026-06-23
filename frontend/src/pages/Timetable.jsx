@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Plus, X, Clock, BookOpen, Trash2 } from 'lucide-react';
 import Layout from '../components/common/Layout';
 import classService from '../services/classService';
+import schoolService from '../services/schoolService';
 import useAuthStore from '../store/authStore';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 
@@ -10,14 +11,13 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const HOURS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
 const SUBJECT_COLORS = [
-  { bg: 'bg-violet-900/60 border-violet-600/50', text: 'text-violet-200', dot: 'bg-violet-400' },
-  { bg: 'bg-cyan-900/60 border-cyan-600/50', text: 'text-cyan-200', dot: 'bg-cyan-400' },
-  { bg: 'bg-emerald-900/60 border-emerald-600/50', text: 'text-emerald-200', dot: 'bg-emerald-400' },
-  { bg: 'bg-amber-900/60 border-amber-600/50', text: 'text-amber-200', dot: 'bg-amber-400' },
-  { bg: 'bg-rose-900/60 border-rose-600/50', text: 'text-rose-200', dot: 'bg-rose-400' },
-  { bg: 'bg-blue-900/60 border-blue-600/50', text: 'text-blue-200', dot: 'bg-blue-400' },
-  { bg: 'bg-pink-900/60 border-pink-600/50', text: 'text-pink-200', dot: 'bg-pink-400' },
-  { bg: 'bg-indigo-900/60 border-indigo-600/50', text: 'text-indigo-200', dot: 'bg-indigo-400' },
+  { bg: 'bg-violet-500/10 border-violet-500/30', text: 'text-violet-300', dot: 'bg-violet-400', shadow: 'shadow-[0_0_15px_rgba(139,92,246,0.15)] group-hover:shadow-[0_0_20px_rgba(139,92,246,0.3)]', grad: 'from-violet-500/20 to-transparent' },
+  { bg: 'bg-cyan-500/10 border-cyan-500/30', text: 'text-cyan-300', dot: 'bg-cyan-400', shadow: 'shadow-[0_0_15px_rgba(6,182,212,0.15)] group-hover:shadow-[0_0_20px_rgba(6,182,212,0.3)]', grad: 'from-cyan-500/20 to-transparent' },
+  { bg: 'bg-emerald-500/10 border-emerald-500/30', text: 'text-emerald-300', dot: 'bg-emerald-400', shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.15)] group-hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]', grad: 'from-emerald-500/20 to-transparent' },
+  { bg: 'bg-amber-500/10 border-amber-500/30', text: 'text-amber-300', dot: 'bg-amber-400', shadow: 'shadow-[0_0_15px_rgba(245,158,11,0.15)] group-hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]', grad: 'from-amber-500/20 to-transparent' },
+  { bg: 'bg-rose-500/10 border-rose-500/30', text: 'text-rose-300', dot: 'bg-rose-400', shadow: 'shadow-[0_0_15px_rgba(244,63,94,0.15)] group-hover:shadow-[0_0_20px_rgba(244,63,94,0.3)]', grad: 'from-rose-500/20 to-transparent' },
+  { bg: 'bg-blue-500/10 border-blue-500/30', text: 'text-blue-300', dot: 'bg-blue-400', shadow: 'shadow-[0_0_15px_rgba(59,130,246,0.15)] group-hover:shadow-[0_0_20px_rgba(59,130,246,0.3)]', grad: 'from-blue-500/20 to-transparent' },
+  { bg: 'bg-pink-500/10 border-pink-500/30', text: 'text-pink-300', dot: 'bg-pink-400', shadow: 'shadow-[0_0_15px_rgba(236,72,153,0.15)] group-hover:shadow-[0_0_20px_rgba(236,72,153,0.3)]', grad: 'from-pink-500/20 to-transparent' },
 ];
 
 function getSubjectColor(subject) {
@@ -34,26 +34,33 @@ function timeToRow(time) {
 function SlotCard({ slot, onDelete, canEdit }) {
   const color = getSubjectColor(slot.subject);
   return (
-    <div className={`relative rounded-xl border px-3 py-2 ${color.bg} group cursor-default`}>
-      <div className="flex items-start justify-between gap-1">
-        <div className="min-w-0">
-          <p className={`font-semibold text-xs leading-tight ${color.text}`}>{slot.subject}</p>
-          <p className="text-dark-400 text-[10px] mt-0.5 truncate">{slot.teacher?.name}</p>
-          {slot.roomNo && <p className="text-dark-500 text-[10px]">Room {slot.roomNo}</p>}
+    <div className={`relative rounded-[14px] border ${color.bg} ${color.shadow} group cursor-default h-full overflow-hidden transition-all duration-300 hover:scale-[1.02]`}>
+      <div className={`absolute top-0 left-0 w-full h-8 bg-gradient-to-b ${color.grad} opacity-50`} />
+      <div className="relative p-2.5 h-full flex flex-col">
+        <div className="flex items-start justify-between gap-1 mb-2">
+          <p className={`font-display font-bold text-[13px] leading-tight ${color.text} truncate pr-2`}>{slot.subject}</p>
+          <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 shadow-[0_0_8px_currentColor] ${color.dot}`} />
         </div>
-        <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-0.5 ${color.dot}`} />
+        
+        <div className="mt-auto">
+           {slot.teacher && <p className="text-slate-400 font-medium text-[10px] truncate leading-snug">{slot.teacher.name}</p>}
+           <div className="flex items-center justify-between mt-1 pt-1.5 border-t border-white/5">
+             <p className="text-slate-500 font-semibold text-[9px] flex items-center gap-1 uppercase tracking-wider">
+               <Clock size={10} /> {slot.startTime}–{slot.endTime}
+             </p>
+             {slot.roomNo && <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-white/5 text-slate-400 border border-white/5 uppercase">Rm {slot.roomNo}</span>}
+           </div>
+        </div>
+
+        {canEdit && (
+          <button
+            onClick={() => onDelete(slot.id)}
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-200 w-6 h-6 flex items-center justify-center rounded-lg bg-red-500/20 border border-red-500/40 text-red-400 hover:bg-red-500 hover:text-white hover:scale-110 shadow-lg"
+          >
+            <Trash2 size={12} fill="currentColor" fillOpacity={0.2} />
+          </button>
+        )}
       </div>
-      <p className="text-dark-500 text-[10px] mt-1 flex items-center gap-1">
-        <Clock size={9} /> {slot.startTime}–{slot.endTime}
-      </p>
-      {canEdit && (
-        <button
-          onClick={() => onDelete(slot.id)}
-          className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center rounded-md bg-red-900/60 text-red-400 hover:bg-red-800/80 transition-all"
-        >
-          <Trash2 size={10} />
-        </button>
-      )}
     </div>
   );
 }
@@ -66,17 +73,28 @@ export default function Timetable() {
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ day: 'MONDAY', startTime: '09:00', endTime: '10:00', subject: '', roomNo: '', teacherId: user?.id });
+  const [teachers, setTeachers] = useState([]);
 
-  const canEdit = user?.role === 'TEACHER' || user?.role === 'SCHOOL';
+  const canEdit = user?.role === 'TEACHER' || user?.role === 'SCHOOL' || user?.role === 'ADMIN';
 
   useEffect(() => {
     if (user?.role === 'TEACHER') {
       loadTeacherTimetable();
       loadTeacherClasses();
-    } else if (user?.role === 'SCHOOL' || user?.role === 'STUDENT') {
+    } else if (user?.role === 'SCHOOL' || user?.role === 'STUDENT' || user?.role === 'ADMIN') {
       loadClasses();
     }
+    if (user?.role === 'SCHOOL' || user?.role === 'ADMIN') {
+      loadTeachers();
+    }
   }, []);
+
+  const loadTeachers = async () => {
+    try {
+      const r = await schoolService.getMembers({ role: 'TEACHER' });
+      setTeachers(r.data?.data || []);
+    } catch (e) { console.error('Failed to load teachers', e); }
+  };
 
   const loadTeacherTimetable = async () => {
     setLoading(true);
@@ -216,18 +234,18 @@ export default function Timetable() {
           </div>
         ) : (
           /* Timetable grid */
-          <div className="overflow-x-auto reveal-scale delay-2">
+          <div className="overflow-x-auto reveal-scale delay-2 p-2">
             <div className="min-w-[700px]">
               {/* Day headers */}
-              <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: '60px repeat(6, 1fr)' }}>
+              <div className="grid gap-3 mb-3" style={{ gridTemplateColumns: '60px repeat(6, 1fr)' }}>
                 <div />
                 {DAYS.map((day, i) => {
                   const count = slotsByDay[day].length;
                   return (
                     <div key={day} className="text-center">
-                      <div className="bg-dark-800 rounded-xl px-3 py-2 border border-dark-700">
-                        <p className="text-dark-100 font-semibold text-sm">{DAY_LABELS[i]}</p>
-                        <p className="text-dark-500 text-[10px]">{count} class{count !== 1 ? 'es' : ''}</p>
+                      <div className="glass rounded-xl px-3 py-2 border border-white/5 transition-all duration-300 hover:bg-white/5 hover:-translate-y-0.5">
+                        <p className="text-white font-display font-bold text-sm tracking-wide">{DAY_LABELS[i]}</p>
+                        <p className="text-slate-500 font-semibold text-[10px] uppercase tracking-widest">{count} class{count !== 1 ? 'es' : ''}</p>
                       </div>
                     </div>
                   );
@@ -235,31 +253,33 @@ export default function Timetable() {
               </div>
 
               {/* Time rows */}
-              {HOURS.map((hour) => (
-                <div key={hour} className="grid gap-2 mb-1.5" style={{ gridTemplateColumns: '60px repeat(6, 1fr)' }}>
-                  {/* Time label */}
-                  <div className="flex items-center justify-end pr-2">
-                    <span className="text-dark-600 text-[10px] font-mono">{hour}</span>
-                  </div>
-                  {/* Day cells */}
-                  {DAYS.map(day => {
-                    const daySlots = slotsByDay[day].filter(s => s.startTime === hour);
-                    return (
-                      <div key={day} className="min-h-[52px]">
-                        {daySlots.length > 0 ? (
-                          <div className="space-y-1">
-                            {daySlots.map(slot => (
-                              <SlotCard key={slot.id} slot={slot} onDelete={handleDeleteSlot} canEdit={canEdit} />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="h-full min-h-[52px] rounded-xl border border-dark-800/50 border-dashed opacity-30" />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
+              <div className="glass rounded-2xl border border-white/5 p-3 shadow-2xl bg-black/10">
+                 {HOURS.map((hour, idx) => (
+                   <div key={hour} className={`grid gap-3 ${idx !== HOURS.length - 1 ? 'mb-2' : ''}`} style={{ gridTemplateColumns: '60px repeat(6, 1fr)' }}>
+                     {/* Time label */}
+                     <div className="flex items-center justify-end pr-2">
+                       <span className="text-slate-500 text-[10px] font-bold tracking-widest">{hour}</span>
+                     </div>
+                     {/* Day cells */}
+                     {DAYS.map(day => {
+                       const daySlots = slotsByDay[day].filter(s => s.startTime === hour);
+                       return (
+                         <div key={`${day}-${hour}`} className="min-h-[56px]">
+                           {daySlots.length > 0 ? (
+                             <div className="space-y-1.5 h-full">
+                               {daySlots.map(slot => (
+                                 <SlotCard key={slot.id} slot={slot} onDelete={handleDeleteSlot} canEdit={canEdit} />
+                               ))}
+                             </div>
+                           ) : (
+                             <div className="h-full min-h-[56px] rounded-[14px] border border-white/5 bg-white/[0.02] border-dashed transition-colors hover:bg-white/[0.04]" />
+                           )}
+                         </div>
+                       );
+                     })}
+                   </div>
+                 ))}
+              </div>
             </div>
           </div>
         )}
@@ -298,6 +318,9 @@ export default function Timetable() {
                 { label: 'Start Time', type: 'select', key: 'startTime', options: HOURS.map(h => ({ value: h, label: h })) },
                 { label: 'End Time', type: 'select', key: 'endTime', options: HOURS.map(h => ({ value: h, label: h })) },
                 { label: 'Room No.', type: 'text', key: 'roomNo', placeholder: 'e.g. A-101 (optional)' },
+                ...(user?.role === 'SCHOOL' || user?.role === 'ADMIN'
+                  ? [{ label: 'Teacher', type: 'select', key: 'teacherId', options: [{ value: '', label: '-- Select Teacher --' }, ...teachers.map(t => ({ value: t.id, label: t.name }))] }]
+                  : []),
               ].map(({ label, type, key, options, placeholder }) => (
                 <div key={key}>
                   <label className="text-[10px] text-dark-400 font-bold uppercase tracking-wider block mb-1">{label}</label>
@@ -322,8 +345,8 @@ export default function Timetable() {
               ))}
               <button
                 onClick={handleAddSlot}
-                disabled={!form.subject}
-                className="w-full py-2.5 rounded-xl text-white font-semibold text-sm bg-gradient-to-r from-brand-600 to-purple-600 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                disabled={!form.subject || ((user?.role === 'SCHOOL' || user?.role === 'ADMIN') && !form.teacherId)}
+                className="w-full py-2.5 rounded-xl text-white font-semibold text-sm bg-gradient-to-r from-brand-600 to-purple-600 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed mt-2 shadow-[0_0_15px_rgba(168,85,247,0.4)]"
               >
                 Add to Timetable
               </button>

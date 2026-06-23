@@ -46,73 +46,72 @@ const CustomTooltip = ({ active, payload, label }) => {
 const StatCard = ({ icon: Icon, label, value, sub, zone = 'overview', index = 0 }) => {
   const z = ZONE[zone];
   return (
-    <div className={`stat-card reveal delay-${Math.min(index + 1, 8)}`}>
+    <div className={`stat-card border border-white/5 bg-white/5 reveal delay-${Math.min(index + 1, 8)}`}>
       <div
-        className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-15 blur-2xl"
+        className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 blur-[40px] transition-opacity duration-300 group-hover:opacity-20"
         style={{ background: z.hex }}
       />
       <div className="relative">
         <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-          style={{ background: `linear-gradient(135deg, ${z.hex}33, ${z.hex}1a)`, border: `1px solid ${z.border}` }}
+          className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 animate-float-random"
+          style={{ background: `linear-gradient(135deg, ${z.hex}33, ${z.hex}1a)`, border: `1px solid ${z.border}`, boxShadow: `0 0 20px ${z.hex}22` }}
         >
-          <Icon size={19} style={{ color: z.hex }} />
+          <Icon size={20} style={{ color: z.hex }} />
         </div>
-        <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest">{label}</p>
-        <p className="font-display font-bold text-3xl text-white mt-1 leading-none">
+        <p className="text-slate-400 text-[10px] font-extrabold uppercase tracking-[0.2em] mb-1">{label}</p>
+        <p className="font-display font-black text-3xl text-white mt-1 leading-none tracking-tight">
           {value === null || value === undefined ? '—' : value}
         </p>
-        {sub && <p className="text-slate-600 text-xs mt-2">{sub}</p>}
+        {sub && <p className="text-slate-500 font-medium text-xs mt-3 flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-slate-500"></span>{sub}</p>}
       </div>
     </div>
   );
 };
 
-// Navigation card with icon and hover shimmer — colour-coded to its zone
+// Navigation card
 const NavCard = ({ icon: Icon, label, desc, to, zone = 'platform', index = 0 }) => {
   const z = ZONE[zone];
   return (
-    <Link to={to} className={`nav-card group reveal delay-${Math.min(index + 1, 8)}`}>
+    <Link to={to} className={`nav-card group card-hover relative overflow-hidden reveal delay-${Math.min(index + 1, 8)}`}>
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{ background: `radial-gradient(circle at top right, ${z.hex}15, transparent 70%)` }} />
       <div
-        className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-105"
-        style={{ background: `linear-gradient(135deg, ${z.hex}38, ${z.hex}18)`, border: `1px solid ${z.border}` }}
+        className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110 shadow-sm"
+        style={{ background: `linear-gradient(135deg, ${z.hex}22, ${z.hex}08)`, border: `1px solid ${z.border}` }}
       >
-        <Icon size={19} style={{ color: z.hex }} />
+        <Icon size={20} style={{ color: z.hex }} />
       </div>
-      <h3 className="text-slate-200 font-semibold text-sm group-hover:text-white transition-colors">{label}</h3>
-      <p className="text-slate-600 text-xs mt-1 leading-relaxed">{desc}</p>
-      <div className="mt-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all" style={{ color: z.hex }}>
-        <span className="text-xs font-semibold">Open</span>
-        <ArrowRight size={12} />
+      <h3 className="text-slate-200 font-bold text-sm group-hover:text-white transition-colors">{label}</h3>
+      <p className="text-slate-500 text-xs mt-1.5 leading-relaxed font-medium">{desc}</p>
+      <div className="mt-4 flex items-center gap-1.5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" style={{ color: z.hex }}>
+        <span className="text-xs font-bold uppercase tracking-wider">Open</span>
+        <ArrowRight size={14} />
       </div>
     </Link>
   );
 };
 
-// Section header — eyebrow + title + aurora divider, colour-coded to its zone
+// Section header
 const SectionHeader = ({ eyebrow, title, zone = 'overview' }) => {
   const z = ZONE[zone];
   return (
-    <div className="reveal mb-5 mt-10 first:mt-0">
-      <p
-        className="text-[10px] font-bold uppercase tracking-[0.22em] mb-2"
-        style={{ color: z.hex }}
-      >
-        {eyebrow}
-      </p>
-      <div className="flex items-center gap-3">
-        <h2 className="font-display font-bold text-xl text-slate-100">{title}</h2>
-        <div className="flex-1 aurora-line" />
+    <div className="reveal mb-6 mt-12 px-1">
+      <div className="flex items-center gap-2 mb-2">
+         <span className="w-2 h-2 rounded-full shadow-lg" style={{ background: z.hex, boxShadow: `0 0 10px ${z.hex}` }}></span>
+         <p className="text-[10px] font-black uppercase tracking-[0.25em]" style={{ color: z.hex }}>{eyebrow}</p>
+      </div>
+      <div className="flex items-center gap-4">
+        <h2 className="font-display font-black text-2xl text-white tracking-tight">{title}</h2>
+        <div className="flex-1 h-[1px]" style={{ background: `linear-gradient(90deg, ${z.hex}44, transparent)` }} />
       </div>
     </div>
   );
 };
 
-// Skeleton loader matching StatCard grid
+// Skeleton loader
 const SkeletonGrid = ({ cols = 4, count = 4 }) => (
   <div className={`grid grid-cols-2 lg:grid-cols-${cols} gap-4 mb-6`}>
     {[...Array(count)].map((_, i) => (
-      <div key={i} className="h-32 skeleton" />
+      <div key={i} className="h-40 skeleton rounded-[24px]" />
     ))}
   </div>
 );

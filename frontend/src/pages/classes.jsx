@@ -97,38 +97,39 @@ export default function Classes() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-12">
             {classes.map((cls, i) => (
               <Link key={cls.id} to={`/classes/${cls.id}`}
-                className={`group bg-dark-800 border border-dark-700 hover:border-cyan-500/40 rounded-2xl overflow-hidden transition-all hover:shadow-lg hover:shadow-cyan-900/20 reveal delay-${Math.min((i % 8) + 1, 8)}`}>
-                {/* Gradient top */}
-                <div className={`h-2 bg-gradient-to-r ${getGrad(cls.name)}`} />
-                <div className="p-5">
+                className={`group card-hover relative overflow-hidden flex flex-col h-full reveal delay-${Math.min((i % 8) + 1, 8)}`}>
+                {/* Embedded gradient glow */}
+                <div className={`absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 blur-[40px] transition-all duration-300 group-hover:scale-110 group-hover:opacity-20 bg-gradient-to-r ${getGrad(cls.name)}`} />
+                
+                <div className="p-5 flex-1 flex flex-col">
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`w-11 h-11 rounded-xl bg-gradient-to-br flex items-center justify-center text-white font-display font-bold text-lg ${getGrad(cls.name)}`}>
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br flex items-center justify-center text-white font-display font-black text-xl shadow-lg border border-white/10 ${getGrad(cls.name)}`}>
                       {cls.grade}
                     </div>
-                    <span className="text-[10px] font-bold px-2 py-1 bg-dark-700 text-dark-400 rounded-lg border border-dark-600 uppercase tracking-wide">
+                    <span className="text-[10px] font-black px-2.5 py-1 bg-white/5 text-slate-300 rounded border border-white/10 uppercase tracking-widest">
                       {cls.year}
                     </span>
                   </div>
-                  <h3 className="font-display font-bold text-dark-100 group-hover:text-cyan-300 transition-colors text-lg">{cls.name}</h3>
-                  <p className="text-dark-500 text-xs mt-0.5">Grade {cls.grade} · Section {cls.section}</p>
+                  <h3 className="font-display font-bold text-white group-hover:text-cyan-300 transition-colors text-xl tracking-tight leading-tight">{cls.name}</h3>
+                  <p className="text-slate-500 font-medium text-xs mt-1">Grade {cls.grade} · Section {cls.section}</p>
 
                   {cls.teacher && (
-                    <div className="flex items-center gap-2 mt-3 px-3 py-2 bg-dark-900 rounded-xl border border-dark-700">
-                      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                    <div className="flex items-center gap-2 mt-5 px-3 py-2 bg-black/20 rounded-xl border border-white/5">
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-[11px] font-bold shadow-inner">
                         {cls.teacher.name?.charAt(0)}
                       </div>
-                      <span className="text-dark-300 text-xs truncate">{cls.teacher.name}</span>
-                      <span className="text-dark-600 text-[10px] ml-auto">Class Teacher</span>
+                      <span className="text-slate-300 text-xs font-semibold truncate flex-1">{cls.teacher.name}</span>
+                      <span className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">Teacher</span>
                     </div>
                   )}
 
-                  <div className="flex items-center gap-3 mt-4 text-xs text-dark-500">
-                    <span className="flex items-center gap-1"><Users size={11} className="text-cyan-500" />{cls._count?.enrollments ?? 0} students</span>
-                    <span className="flex items-center gap-1"><BookOpen size={11} className="text-violet-500" />{cls._count?.assignments ?? 0} assignments</span>
-                    <span className="flex items-center gap-1"><UserCheck size={11} className="text-emerald-500" />{cls._count?.attendances ?? 0} records</span>
+                  <div className="flex items-center gap-3 mt-auto pt-6 text-xs text-slate-400 font-medium">
+                    <span className="flex items-center gap-1"><Users size={12} className="text-cyan-400" />{cls._count?.enrollments ?? 0}</span>
+                    <span className="flex items-center gap-1"><BookOpen size={12} className="text-violet-400" />{cls._count?.assignments ?? 0}</span>
+                    <span className="flex items-center gap-1"><UserCheck size={12} className="text-emerald-400" />{cls._count?.attendances ?? 0}</span>
                   </div>
                 </div>
               </Link>

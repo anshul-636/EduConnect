@@ -113,16 +113,16 @@ export default function Assignments() {
 
         {/* Student stats */}
         {stats && (
-          <div className="grid grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-4 gap-4 mb-8">
             {[
-              { label: 'Total', val: stats.total, cls: 'text-dark-200' },
-              { label: 'Pending', val: stats.pending, cls: 'text-amber-300' },
-              { label: 'Graded', val: stats.graded, cls: 'text-emerald-300' },
-              { label: 'Overdue', val: stats.overdue, cls: 'text-red-300' },
+              { label: 'Total', val: stats.total, cls: 'text-white' },
+              { label: 'Pending', val: stats.pending, cls: 'text-amber-400' },
+              { label: 'Graded', val: stats.graded, cls: 'text-emerald-400' },
+              { label: 'Overdue', val: stats.overdue, cls: 'text-red-400' },
             ].map(({ label, val, cls }, i) => (
-              <div key={label} className={`bg-dark-800 rounded-2xl p-4 border border-dark-700 reveal delay-${i + 1}`}>
-                <p className="text-dark-500 text-xs font-medium uppercase tracking-wide">{label}</p>
-                <p className={`font-display font-bold text-2xl mt-1 ${cls}`}>{val}</p>
+              <div key={label} className={`glass rounded-2xl p-5 border border-white/5 reveal delay-${i + 1}`}>
+                <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-1">{label}</p>
+                <p className={`font-display font-black text-3xl tracking-tight leading-none ${cls}`}>{val}</p>
               </div>
             ))}
           </div>
@@ -130,11 +130,11 @@ export default function Assignments() {
 
         {/* Filters */}
         {FILTERS.length > 1 && (
-          <div className="flex gap-2 mb-5 flex-wrap reveal delay-2">
+          <div className="flex gap-2.5 mb-6 flex-wrap reveal delay-2">
             {FILTERS.map(f => (
               <button key={f} onClick={() => setFilter(f)}
-                className={`text-xs font-semibold px-4 py-1.5 rounded-full border transition-all ${filter === f ? 'bg-violet-600/30 text-violet-300 border-violet-500/50' : 'text-dark-400 border-dark-700 hover:bg-dark-800'}`}>
-                {f === 'ALL' ? 'All' : STATUS_STYLE[f]?.label || f}
+                className={`text-[11px] font-bold uppercase tracking-wider px-4 py-2 rounded-full border transition-all duration-300 shadow-sm ${filter === f ? 'bg-violet-500 border-violet-400 text-white shadow-[0_0_15px_rgba(139,92,246,0.3)]' : 'bg-white/5 text-slate-400 border-white/5 hover:bg-white/10 hover:text-white'}`}>
+                {f === 'ALL' ? 'All Assignments' : STATUS_STYLE[f]?.label || f}
               </button>
             ))}
           </div>
@@ -164,27 +164,32 @@ export default function Assignments() {
               const subCount = a._count?.submissions ?? 0;
               return (
                 <Link key={a.id} to={`/assignments/${a.id}`}
-                  className={`flex items-center gap-4 p-5 rounded-2xl bg-dark-800 border border-dark-700 hover:border-violet-500/40 hover:bg-dark-750 transition-all group reveal-left delay-${Math.min((i % 8) + 1, 8)}`}>
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center flex-shrink-0 shadow-sm">
-                    <ClipboardList size={18} className="text-white" />
+                  className={`group card-hover relative overflow-hidden flex items-center gap-5 p-5 reveal-left delay-${Math.min((i % 8) + 1, 8)}`}>
+                  <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 blur-[30px] transition-all duration-300 group-hover:scale-125 group-hover:opacity-20 bg-gradient-to-r from-violet-500 to-fuchsia-600" />
+                  
+                  <div className="relative z-10 w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600/20 to-purple-800/40 border border-violet-500/30 flex items-center justify-center flex-shrink-0 shadow-[0_0_15px_rgba(139,92,246,0.15)] group-hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all">
+                    <ClipboardList size={22} className="text-violet-400 group-hover:text-violet-300 transition-colors" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-dark-100 font-semibold group-hover:text-violet-300 transition-colors truncate">{a.title}</h3>
+                  
+                  <div className="relative z-10 flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-1.5 flex-wrap">
+                      <h3 className="text-white font-display font-bold text-lg group-hover:text-violet-300 transition-colors truncate tracking-tight">{a.title}</h3>
                       {!isTeacher && <Badge status={status} />}
                     </div>
-                    <p className="text-dark-500 text-xs mt-1 flex items-center gap-3 flex-wrap">
-                      <span className="flex items-center gap-1"><Calendar size={10} /> Due {new Date(a.dueDate).toLocaleDateString()}</span>
-                      <span>{a.class?.name} · {a.teacher?.name}</span>
-                      {isTeacher && <span className="text-violet-400">{subCount} submission{subCount !== 1 ? 's' : ''}</span>}
-                    </p>
+                    <div className="flex items-center gap-4 flex-wrap text-slate-400 text-xs font-medium">
+                      <span className="flex items-center gap-1.5 px-2 py-1 bg-black/20 rounded border border-white/5"><Calendar size={12} className="text-brand-400" /> Due {new Date(a.dueDate).toLocaleDateString()}</span>
+                      <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-slate-600" /> {a.class?.name}</span>
+                      <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-slate-600" /> {a.teacher?.name}</span>
+                      {isTeacher && <span className="text-violet-400 font-bold ml-auto px-2 py-1 bg-violet-500/10 rounded-full">{subCount} submission{subCount !== 1 ? 's' : ''}</span>}
+                    </div>
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className={`text-xs font-semibold ${dl.cls}`}>{dl.label}</p>
+                  
+                  <div className="relative z-10 pl-4 border-l border-white/5 text-right flex-shrink-0">
+                    <p className={`text-[11px] font-bold uppercase tracking-widest ${dl.cls}`}>{dl.label}</p>
                     {myScore != null && (
-                      <p className="text-emerald-300 font-bold text-sm mt-0.5">{myScore}/{a.maxScore}</p>
+                      <p className="text-emerald-400 font-display font-black text-xl tracking-tight mt-1">{myScore}<span className="text-slate-500 text-sm font-medium">/{a.maxScore}</span></p>
                     )}
-                    <p className="text-dark-600 text-xs mt-0.5">Max: {a.maxScore}</p>
+                    <p className="text-slate-500 font-medium text-[10px] mt-1 uppercase tracking-wider">Max Score: {a.maxScore}</p>
                   </div>
                 </Link>
               );

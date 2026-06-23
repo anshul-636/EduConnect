@@ -120,6 +120,7 @@ router.post('/google/complete', async (req, res) => {
           password: 'GOOGLE_OAUTH_' + googleId,
           role,
           isActive: true,
+          isVerified: true, // Google-authenticated users don't need email verification
           ...(schoolId ? { schoolId } : {}),
         },
       });

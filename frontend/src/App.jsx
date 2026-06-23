@@ -9,6 +9,7 @@ import GoogleRoleSelect from './pages/auth/GoogleRoleSelect';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import VerifyEmail from './pages/auth/VerifyEmail';
 import ResetPassword from './pages/auth/ResetPassword';
+import Landing from './pages/Landing';
 
 // Dashboards
 import { StudentDashboard, TeacherDashboard, SchoolDashboard, AdminDashboard } from './pages/dashboard/index';
@@ -124,8 +125,8 @@ export default function App() {
         <Route path="/ai/planner" element={<ProtectedRoute><StudyPlanner /></ProtectedRoute>} />
         <Route path="/ai/bot" element={<ProtectedRoute><PlatformBot /></ProtectedRoute>} />
 
-        {/* Fallback */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* Fallback & Landing */}
+        <Route path="/" element={<PublicRoute><Landing /></PublicRoute>} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
