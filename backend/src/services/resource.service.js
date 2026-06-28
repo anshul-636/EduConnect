@@ -14,13 +14,17 @@ const path = require('path');
 
 class ResourceService {
   async create(data, file, userId) {
-    // Cloudinary uploads set file.path to the CDN URL.
-    // Local uploads set file.filename — build a URL from BACKEND_URL.
-    const fileUrl = file
-      ? (file.path && file.path.startsWith('http')
-        ? file.path
-        : `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/${file.filename}`)
-      : data.fileUrl || null;
+    // In production, upload buffer to Cloudinary and get back a CDN URL.
+    // In development, file is on local disk — build a URL from BACKEND_URL.
+    let fileUrl = data.fileUrl || null;
+    if (file) {
+      if (process.env.NODE_ENV === 'production' && process.env.CLOUDINARY_CLOUD_NAME) {
+        const { uploadToCloudinary } = require('../utils/cloudinaryUpload');
+        fileUrl = await uploadToCloudinary(file.buffer, file.originalname);
+      } else {
+        fileUrl = `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/${file.filename}`;
+      }
+    }
 
     const resource = await prisma.resource.create({
       data: {

@@ -36,8 +36,6 @@ services:
     container_name: educonnect_backend
     env_file: ./backend/.env
     environment:
-      - DATABASE_URL=postgresql://postgres:password@postgres:5432/educonnect
-      - REDIS_URL=redis://redis:6379
       - AI_SERVICE_URL=http://ai-service:8000
       - NODE_ENV=production
     ports:
