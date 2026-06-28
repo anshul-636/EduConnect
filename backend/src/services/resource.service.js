@@ -14,8 +14,12 @@ const path = require('path');
 
 class ResourceService {
   async create(data, file, userId) {
+    // Cloudinary uploads set file.path to the CDN URL.
+    // Local uploads set file.filename — build a URL from BACKEND_URL.
     const fileUrl = file
-      ? `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/${file.filename}`
+      ? (file.path && file.path.startsWith('http')
+        ? file.path
+        : `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/${file.filename}`)
       : data.fileUrl || null;
 
     const resource = await prisma.resource.create({
@@ -35,16 +39,24 @@ class ResourceService {
     // Auto-embed PDF into ChromaDB for AI RAG search
     if (file && (data.type === 'PDF' || file.originalname?.endsWith('.pdf'))) {
       try {
-        const filePath = path.join(__dirname, '../../uploads', file.filename);
         const FormData = require('form-data');
         const form = new FormData();
-        form.append('file', fs.createReadStream(filePath), {
-          filename: file.originalname || file.filename,
-        });
+
+        if (fileUrl && fileUrl.startsWith('http')) {
+          // Cloudinary / remote URL — stream directly without touching disk
+          const response = await axios.get(fileUrl, { responseType: 'stream' });
+          form.append('file', response.data, { filename: file.originalname || file.filename });
+        } else {
+          const filePath = path.join(__dirname, '../../uploads', file.filename);
+          form.append('file', fs.createReadStream(filePath), {
+            filename: file.originalname || file.filename,
+          });
+        }
+
         form.append('resource_id', resource.id);
         form.append('title', resource.title);
 
-        const aiUrl = process.env.AI_SERVICE_URL || 'http://localhost:8001';
+        const aiUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000';
         await axios.post(`${aiUrl}/api/v1/embed/pdf`, form, {
           headers: form.getHeaders(),
           timeout: 30000,

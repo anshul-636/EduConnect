@@ -2,7 +2,7 @@ const { Router } = require('express');
 const c = require('../controllers/assignment.controller');
 const { protect } = require('../middleware/auth.middleware');
 const { restrictTo } = require('../middleware/role.middleware');
-const { localUpload } = require('../utils/localUpload');
+const { upload: localUpload } = require('../utils/cloudinaryUpload');
 const r = Router();
 
 r.get('/mine', protect, c.getMine);

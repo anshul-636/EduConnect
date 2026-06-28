@@ -1,0 +1,67 @@
+# render.yaml — Deploy EduConnect to Render with one click.
+# https://render.com/docs/blueprint-spec
+
+services:
+  # ── Backend (Node.js) ──────────────────────────────────────────────────────
+  - type: web
+    name: educonnect-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate
+    startCommand: node src/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        sync: false          # Fill in Render dashboard → from Neon.tech
+      - key: REDIS_URL
+        sync: false          # Fill in Render dashboard → from Upstash
+      - key: JWT_SECRET
+        generateValue: true  # Render auto-generates a secure random value
+      - key: JWT_ACCESS_EXPIRES
+        value: 30m
+      - key: JWT_REFRESH_EXPIRES
+        value: 7d
+      - key: ALLOWED_ORIGINS
+        sync: false          # e.g. https://your-app.vercel.app
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: EMAIL_USER
+        sync: false          # your-gmail@gmail.com
+      - key: EMAIL_PASS
+        sync: false          # Gmail App Password
+      - key: AI_SERVICE_URL
+        sync: false          # https://educonnect-ai.onrender.com  (fill after AI deploys)
+      - key: BACKEND_URL
+        sync: false          # https://educonnect-backend.onrender.com
+      - key: GOOGLE_CLIENT_ID
+        sync: false          # optional — leave blank to disable Google OAuth
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false          # https://educonnect-backend.onrender.com/api/v1/auth/google/callback
+
+  # ── AI Service (Python / FastAPI) ─────────────────────────────────────────
+  - type: web
+    name: educonnect-ai
+    runtime: python
+    rootDir: ai-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: GROQ_API_KEY
+        sync: false          # from console.groq.com (free)
+      - key: GOOGLE_API_KEY
+        sync: false          # from aistudio.google.com (free, optional)
+      - key: NODE_BACKEND_URL
+        sync: false          # https://educonnect-backend.onrender.com
+      - key: ALLOWED_ORIGINS
+        sync: false          # https://your-app.vercel.app,https://educonnect-backend.onrender.com
